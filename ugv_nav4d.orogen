@@ -1,0 +1,35 @@
+name "ugv_nav4d"
+
+import_types_from "envire_maps"
+#import_types_from "motion_planning_libraries"
+import_types_from "ugv_nav4d/TraversabilityConfig.hpp"
+import_types_from "motion_planning_libraries/sbpl/SbplMotionPrimitives.hpp"
+using_library "ugv_nav4d"
+
+
+import_types_from "base"
+
+
+task_context "Task" do
+    needs_configuration
+
+    property "maxTime", "base::Time"
+    property "primConfig", "motion_planning_libraries::MotionPrimitivesConfig"
+    property "travConfig", "ugv_nav4d::TraversabilityConfig"
+    input_port "map", "/maps/grid/MLSMap</maps/grid/MLSConfig/SLOPE>"
+    output_port "trajectory", "std::vector<base/Trajectory>"
+    
+    input_port('start', 'base/samples/RigidBodyState')
+    input_port('goal', 'base/samples/RigidBodyState')
+
+    
+    runtime_states :NO_MAP,
+        :NO_GOAL,
+        :NO_START,
+        :PLANNING,
+        :NO_SOLUTION
+
+    
+    periodic 0.1
+end
+

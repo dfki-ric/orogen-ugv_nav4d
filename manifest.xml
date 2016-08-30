@@ -1,0 +1,10 @@
+<package>
+  <description brief="A XYZ Theta planner for UGVs">
+  
+  </description>
+  <author>Janosch Machowinski/Janosch.Machowinski@dfki.de</author>
+  <license></license>
+  <url>http://</url>
+  <logo>http://</logo>
+  <depend package="planning/ugv_nav4d" />
+</package>
