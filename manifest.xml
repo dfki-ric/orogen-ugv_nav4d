@@ -7,4 +7,5 @@
   <url>http://</url>
   <logo>http://</logo>
   <depend package="planning/ugv_nav4d" />
+  <depend package="envire/orogen/envire_maps" />  
 </package>
