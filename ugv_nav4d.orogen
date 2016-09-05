@@ -27,7 +27,8 @@ task_context "Task" do
         :NO_GOAL,
         :NO_START,
         :PLANNING,
-        :NO_SOLUTION
+        :NO_SOLUTION,
+        :FOUND_SOLUTION
 
     
     periodic 0.1

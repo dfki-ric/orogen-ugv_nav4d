@@ -83,6 +83,8 @@ void Task::updateHook()
             std::vector<base::Trajectory> trajectory;
             planner->getTrajectory(trajectory);
             _trajectory.write(trajectory);
+            
+            setIfNotSet(FOUND_SOLUTION);
         }
         else
         {
