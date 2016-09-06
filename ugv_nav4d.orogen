@@ -16,7 +16,7 @@ task_context "Task" do
     property "maxTime", "base::Time"
     property "primConfig", "motion_planning_libraries::MotionPrimitivesConfig"
     property "travConfig", "ugv_nav4d::TraversabilityConfig"
-    input_port "map", "/maps/grid/MLSMap</maps/grid/MLSConfig/SLOPE>"
+    input_port "map", spatio_temporal('/maps/grid/MLSMapKalman')
     output_port "trajectory", "std::vector<base/Trajectory>"
     
     input_port('start', 'base/samples/RigidBodyState')

@@ -2,6 +2,7 @@
 
 #include "Task.hpp"
 #include <ugv_nav4d/Planner.hpp>
+#include <envire_core/items/SpatioTemporal.hpp>
 
 
 using namespace ugv_nav4d;
@@ -52,11 +53,11 @@ void Task::setIfNotSet(const TaskBase::States& newState)
 
 void Task::updateHook()
 {
-    maps::grid::MLSMapSloped map;
+    envire::core::SpatioTemporal<maps::grid::MLSMapKalman> map;
     auto ret = _map.readNewest(map);
     if(ret == RTT::NewData)
     {
-        planner->updateMap(map);
+        planner->updateMap(map.getData());
     }
     
     if(ret == RTT::NoData)
