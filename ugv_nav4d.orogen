@@ -3,7 +3,8 @@ name "ugv_nav4d"
 import_types_from "envire_maps"
 #import_types_from "motion_planning_libraries"
 import_types_from "ugv_nav4d/TraversabilityConfig.hpp"
-import_types_from "motion_planning_libraries/sbpl/SbplMotionPrimitives.hpp"
+import_types_from "motion_planning_libraries/sbpl/SplinePrimitivesConfig.hpp"
+import_types_from "motion_planning_libraries/Config.hpp"
 using_library "ugv_nav4d"
 
 
@@ -14,8 +15,9 @@ task_context "Task" do
     needs_configuration
 
     property "maxTime", "base::Time"
-    property "primConfig", "motion_planning_libraries::MotionPrimitivesConfig"
+    property "primConfig", "motion_planning_libraries::SplinePrimitivesConfig"
     property "travConfig", "ugv_nav4d::TraversabilityConfig"
+    property "mobilityConfig", "motion_planning_libraries::Mobility"
     input_port "map", spatio_temporal('/maps/grid/MLSMapKalman')
     output_port "trajectory", "std::vector<base/Trajectory>"
     
