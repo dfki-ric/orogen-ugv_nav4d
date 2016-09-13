@@ -32,7 +32,9 @@ bool Task::configureHook()
     if(planner)
         delete planner;
     
-    planner = new Planner(_primConfig.get(), _travConfig.get());
+    // FIXME get configuration for Splines and Mobility from config
+    planner = new Planner(motion_planning_libraries::SplinePrimitivesConfig(), _travConfig.get(), motion_planning_libraries::Mobility());
+    //planner = new Planner(_primConfig.get(), _travConfig.get());
     
     if (! TaskBase::configureHook())
         return false;
