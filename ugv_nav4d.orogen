@@ -21,8 +21,8 @@ task_context "Task" do
     input_port "map", spatio_temporal('/maps/grid/MLSMapKalman')
     output_port "trajectory", "std::vector<base/Trajectory>"
     
-    input_port('start', 'base/samples/RigidBodyState')
-    input_port('goal', 'base/samples/RigidBodyState')
+    input_port('start_position', 'base/samples/RigidBodyState')
+    input_port('goal_position', 'base/samples/RigidBodyState')
 
     
     runtime_states :NO_MAP,

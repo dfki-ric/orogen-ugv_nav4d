@@ -69,13 +69,13 @@ void Task::updateHook()
     base::samples::RigidBodyState start;
     base::samples::RigidBodyState stop;
     
-    if(_start.readNewest(start) == RTT::NoData)
+    if(_start_position.readNewest(start) == RTT::NoData)
     {
         setIfNotSet(NO_START);
         return;
     }
 
-    if(_goal.readNewest(stop) == RTT::NoData)
+    if(_goal_position.readNewest(stop) == RTT::NoData)
     {
         setIfNotSet(NO_GOAL);
         
