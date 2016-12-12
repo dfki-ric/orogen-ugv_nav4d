@@ -54,44 +54,58 @@ void Task::setIfNotSet(const TaskBase::States& newState)
 void Task::updateHook()
 {
     envire::core::SpatioTemporal<maps::grid::MLSMapKalman> map;
-    auto ret = _map.readNewest(map);
-    if(ret == RTT::NewData)
-    {
-        planner->updateMap(map.getData());
-    }
-    
-    if(ret == RTT::NoData)
+    auto map_status = _map.readNewest(map);
+
+    if(map_status == RTT::NoData)
     {
         setIfNotSet(NO_MAP);
         return;
-    }
+    } else if(map_status == RTT::NewData)
+    {
+        planner->updateMap(map.getData());
+    } 
     
-    base::samples::RigidBodyState start;
-    base::samples::RigidBodyState stop;
+    base::samples::RigidBodyState start_pose;
+    base::samples::RigidBodyState stop_pose;
     
-    if(_start_position.readNewest(start) == RTT::NoData)
+    if(_start_position.readNewest(start_pose) == RTT::NoData)
     {
         setIfNotSet(NO_START);
         return;
-    }
-
-    if(_goal_position.readNewest(stop) == RTT::NoData)
+    } else
     {
-        setIfNotSet(NO_GOAL);
-        
-        if(planner->plan(base::Time::fromSeconds(10), start, stop))
+        std::cout << "StartPose: " << start_pose.position.x() << " "
+            << start_pose.position.y() << " "
+            << start_pose.position.z() << " " << std::endl;
+    } 
+
+    auto goal_pose_status = _goal_position.readNewest(stop_pose);
+
+    if(goal_pose_status == RTT::NoData)
+    {
+        setIfNotSet(NO_GOAL);        
+        return;
+    } else
+    {
+        std::cout << "GoalPose: " << stop_pose.position.x() << " "
+            << stop_pose.position.y() << " "
+            << stop_pose.position.z() << " " << std::endl;
+                  
+    } 
+
+    if (goal_pose_status == RTT::NewData || map_status == RTT::NewData)
+    {
+        if(planner->plan(base::Time::fromSeconds(10), start_pose, stop_pose))
         {
             std::vector<base::Trajectory> trajectory;
             planner->getTrajectory(trajectory);
             _trajectory.write(trajectory);
             
             setIfNotSet(FOUND_SOLUTION);
-        }
-        else
+        } else
         {
-        }
-        
-        return;
+            std::cout << "Something wrong!!!" << std::endl;
+        }  
     }
     
     
