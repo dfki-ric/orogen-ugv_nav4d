@@ -95,6 +95,7 @@ void Task::updateHook()
 
     if (goal_pose_status == RTT::NewData || map_status == RTT::NewData)
     {
+        setIfNotSet(PLANNING);
         if(planner->plan(_maxTime.value(), start_pose, stop_pose))
         {
             std::vector<base::Trajectory> trajectory;
@@ -104,8 +105,8 @@ void Task::updateHook()
             setIfNotSet(FOUND_SOLUTION);
         } else
         {
-            std::cout << "Something wrong!!!" << std::endl;
-        }  
+            setIfNotSet(NO_SOLUTION);
+        }
     }
     
     
