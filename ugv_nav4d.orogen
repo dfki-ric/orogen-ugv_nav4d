@@ -11,7 +11,7 @@ using_library "ugv_nav4d"
 import_types_from "base"
 
 
-task_context "Task" do
+task_context "PathPlanner" do
     needs_configuration
 
     property "maxTime", "base::Time"

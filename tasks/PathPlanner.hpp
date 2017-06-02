@@ -1,17 +1,12 @@
-/* Generated from orogen/lib/orogen/templates/tasks/Task.hpp */
+#pragma once
 
-#ifndef UGV_NAV4D_TASK_TASK_HPP
-#define UGV_NAV4D_TASK_TASK_HPP
-
-#include "ugv_nav4d/TaskBase.hpp"
-
-
+#include "ugv_nav4d/PathPlannerBase.hpp"
 
 namespace ugv_nav4d{
 
     class Planner;
-    
-    /*! \class Task
+        
+    /*! \class PathPlanner
      * \brief The task context provides and requires services. It uses an ExecutionEngine to perform its functions.
      * Essential interfaces are operations, data flow ports and properties. These interfaces have been defined using the oroGen specification.
      * In order to modify the interfaces you should (re)use oroGen and rely on the associated workflow.
@@ -20,36 +15,39 @@ namespace ugv_nav4d{
      * The name of a TaskContext is primarily defined via:
      \verbatim
      deployment 'deployment_name'
-         task('custom_task_name','ugv_nav4d::Task')
+         task('custom_task_name','ugv_nav4d::PathPlanner')
      end
      \endverbatim
      *  It can be dynamically adapted when the deployment is called with a prefix argument.
      */
-    class Task : public TaskBase
+    class PathPlanner : public PathPlannerBase
     {
-	friend class TaskBase;
+	friend class PathPlannerBase;
+    protected:
+
     protected:
         Planner *planner;
 
 
-        void setIfNotSet(const TaskBase::States &newState);
+        void setIfNotSet(const PathPlannerBase::States &newState);
+
     public:
-        /** TaskContext constructor for Task
+        /** TaskContext constructor for PathPlanner
          * \param name Name of the task. This name needs to be unique to make it identifiable via nameservices.
          * \param initial_state The initial TaskState of the TaskContext. Default is Stopped state.
          */
-        Task(std::string const& name = "ugv_nav4d::Task");
+        PathPlanner(std::string const& name = "ugv_nav4d::PathPlanner");
 
-        /** TaskContext constructor for Task
+        /** TaskContext constructor for PathPlanner
          * \param name Name of the task. This name needs to be unique to make it identifiable for nameservices.
          * \param engine The RTT Execution engine to be used for this task, which serialises the execution of all commands, programs, state machines and incoming events for a task.
          * 
          */
-        Task(std::string const& name, RTT::ExecutionEngine* engine);
+        PathPlanner(std::string const& name, RTT::ExecutionEngine* engine);
 
-        /** Default deconstructor of Task
+        /** Default deconstructor of PathPlanner
          */
-	~Task();
+	~PathPlanner();
 
         /** This hook is called by Orocos when the state machine transitions
          * from PreOperational to Stopped. If it returns false, then the
@@ -111,5 +109,5 @@ namespace ugv_nav4d{
     };
 }
 
-#endif
+
 

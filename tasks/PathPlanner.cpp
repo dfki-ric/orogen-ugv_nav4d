@@ -1,57 +1,55 @@
 /* Generated from orogen/lib/orogen/templates/tasks/Task.cpp */
 
-#include "Task.hpp"
+#include "PathPlanner.hpp"
 #include <ugv_nav4d/Planner.hpp>
 #include <envire_core/items/SpatioTemporal.hpp>
 
-
 using namespace ugv_nav4d;
 
-Task::Task(std::string const& name)
-    : TaskBase(name), planner(nullptr)
+PathPlanner::PathPlanner(std::string const& name)
+    : PathPlannerBase(name), planner(nullptr)
 {
 }
 
-Task::Task(std::string const& name, RTT::ExecutionEngine* engine)
-    : TaskBase(name, engine), planner(nullptr)
+PathPlanner::PathPlanner(std::string const& name, RTT::ExecutionEngine* engine)
+    : PathPlannerBase(name, engine), planner(nullptr)
 {
 }
 
-Task::~Task()
+PathPlanner::~PathPlanner()
 {
 }
 
+void PathPlanner::setIfNotSet(const PathPlannerBase::States& newState)
+{
+    if(state() != newState);
+        state(newState);
+}
 
 
 /// The following lines are template definitions for the various state machine
-// hooks defined by Orocos::RTT. See Task.hpp for more detailed
+// hooks defined by Orocos::RTT. See PathPlanner.hpp for more detailed
 // documentation about them.
 
-bool Task::configureHook()
+bool PathPlanner::configureHook()
 {
     if(planner)
         delete planner;
 
     planner = new Planner(_primConfig.get(), _travConfig.get(), _mobilityConfig.get());
     
-    if (! TaskBase::configureHook())
+    if (! PathPlannerBase::configureHook())
+        return false;
+    return true;
+
+}
+bool PathPlanner::startHook()
+{
+    if (! PathPlannerBase::startHook())
         return false;
     return true;
 }
-bool Task::startHook()
-{
-    if (! TaskBase::startHook())
-        return false;
-    return true;
-}
-
-void Task::setIfNotSet(const TaskBase::States& newState)
-{
-    if(state() != newState);
-        state(newState);
-}
-
-void Task::updateHook()
+void PathPlanner::updateHook()
 {
     envire::core::SpatioTemporal<maps::grid::MLSMapKalman> map;
     auto map_status = _map.readNewest(map);
@@ -108,18 +106,17 @@ void Task::updateHook()
         }
     }
     
-    
-    TaskBase::updateHook();
+    PathPlannerBase::updateHook();
 }
-void Task::errorHook()
+void PathPlanner::errorHook()
 {
-    TaskBase::errorHook();
+    PathPlannerBase::errorHook();
 }
-void Task::stopHook()
+void PathPlanner::stopHook()
 {
-    TaskBase::stopHook();
+    PathPlannerBase::stopHook();
 }
-void Task::cleanupHook()
+void PathPlanner::cleanupHook()
 {
-    TaskBase::cleanupHook();
+    PathPlannerBase::cleanupHook();
 }
