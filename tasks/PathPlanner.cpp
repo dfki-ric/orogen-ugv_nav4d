@@ -3,6 +3,7 @@
 #include "PathPlanner.hpp"
 #include <ugv_nav4d/Planner.hpp>
 #include <envire_core/items/SpatioTemporal.hpp>
+#include <vizkit3d_debug_drawings/DebugDrawing.h>
 
 using namespace ugv_nav4d;
 
@@ -51,6 +52,8 @@ bool PathPlanner::startHook()
 }
 void PathPlanner::updateHook()
 {
+    CONFIGURE_DEBUG_DRAWINGS_USE_PORT_NO_THROW(&_debugDrawings);
+    
     envire::core::SpatioTemporal<maps::grid::MLSMapKalman> map;
     auto map_status = _map.readNewest(map);
 

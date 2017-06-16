@@ -6,6 +6,7 @@ import_types_from "ugv_nav4d/TraversabilityConfig.hpp"
 import_types_from "motion_planning_libraries/sbpl/SplinePrimitivesConfig.hpp"
 import_types_from "motion_planning_libraries/Config.hpp"
 using_library "ugv_nav4d"
+import_types_from "vizkit3d_debug_drawings"
 
 
 import_types_from "base"
@@ -21,6 +22,7 @@ task_context "PathPlanner" do
     input_port "map", spatio_temporal('/maps/grid/MLSMapKalman')
     output_port "trajectory", "std::vector<base/Trajectory>"
     output_port "tr_map", spatio_temporal('/maps/grid/TraversabilityBaseMap3d')
+    output_port "debugDrawings", "/boost/shared_ptr</vizkit3dDebugDrawings/CommandBuffer>"
     
     input_port('start_position', 'base/samples/RigidBodyState')
     input_port('goal_position', 'base/samples/RigidBodyState')
