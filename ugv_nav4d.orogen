@@ -20,6 +20,7 @@ task_context "PathPlanner" do
     property "mobilityConfig", "motion_planning_libraries::Mobility"
     input_port "map", spatio_temporal('/maps/grid/MLSMapKalman')
     output_port "trajectory", "std::vector<base/Trajectory>"
+    output_port "tr_map", spatio_temporal('/maps/grid/TraversabilityBaseMap3d')
     
     input_port('start_position', 'base/samples/RigidBodyState')
     input_port('goal_position', 'base/samples/RigidBodyState')
