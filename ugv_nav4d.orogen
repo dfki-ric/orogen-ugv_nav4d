@@ -3,10 +3,13 @@ name "ugv_nav4d"
 import_types_from "envire_maps"
 #import_types_from "motion_planning_libraries"
 import_types_from "ugv_nav4d/TraversabilityConfig.hpp"
+import_types_from "ugv_nav4d/Config.hpp"
+import_types_from "ugv_nav4d/Box.hpp"
 import_types_from "motion_planning_libraries/sbpl/SplinePrimitivesConfig.hpp"
 import_types_from "motion_planning_libraries/Config.hpp"
 using_library "ugv_nav4d"
 import_types_from "vizkit3d_debug_drawings"
+
 
 
 import_types_from "base"
@@ -39,3 +42,39 @@ task_context "PathPlanner" do
     periodic 0.1
 end
 
+task_context "AreaExploration" do
+    needs_configuration
+    
+    property "travConfig", "ugv_nav4d::TraversabilityConfig"
+    property "costConfig", "ugv_nav4d::CostFunctionParameters"
+    
+    operation("clearPlannerMap").
+        doc("Clears the internal exploration map. All obstacles will be readded by receiving the next trav map.")
+
+    input_port "map", spatio_temporal('/maps/grid/MLSMapKalman')
+
+    output_port('goals_out', 'std/vector<base/samples/RigidBodyState>').
+        doc "Calculated goal, using x and y"
+        
+    output_port('goal_out_best', 'base/samples/RigidBodyState').
+        doc("Just the first (best) goal of the goal_out list.")
+
+    input_port("pose_samples", "base/samples/RigidBodyState").
+        needs_reliable_connection.
+        doc "Robot pose in traversability frame"
+
+    operation("calculateGoals").
+        arg("area", "ugv_nav4d::Box").
+        doc("Triggers the calculation of a new list of goals")
+        
+    port_driven 'map', 'pose_samples'
+    
+    runtime_states :NO_MAP,
+        :NO_POSE,
+        :PLANNING,
+        :AREA_EXPLORED,
+        :GOALS_GENERATED
+
+    
+    #periodic(1.0)
+end
