@@ -38,7 +38,7 @@ namespace ugv_nav4d{
         
         /* Triggers the calculation of a new list of goals
          */
-        virtual void calculateGoals(::ugv_nav4d::Box const & area);
+        virtual void calculateGoals(::ugv_nav4d::OrientedBoxConfig const & area);
 
         /* Clears the internal exploration map. All obstacles will be readded by receiving the next trav map.
          */

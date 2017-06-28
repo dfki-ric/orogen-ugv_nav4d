@@ -20,7 +20,7 @@ AreaExploration::~AreaExploration()
 {
 }
 
-void AreaExploration::calculateGoals(::ugv_nav4d::Box const & area)
+void AreaExploration::calculateGoals(::ugv_nav4d::OrientedBoxConfig const & area)
 {
     if(!mapValid)
     {

@@ -4,7 +4,7 @@ import_types_from "envire_maps"
 #import_types_from "motion_planning_libraries"
 import_types_from "ugv_nav4d/TraversabilityConfig.hpp"
 import_types_from "ugv_nav4d/Config.hpp"
-import_types_from "ugv_nav4d/Box.hpp"
+import_types_from "ugv_nav4d/OrientedBox.hpp"
 import_types_from "motion_planning_libraries/sbpl/SplinePrimitivesConfig.hpp"
 import_types_from "motion_planning_libraries/Config.hpp"
 using_library "ugv_nav4d"
@@ -64,7 +64,7 @@ task_context "AreaExploration" do
         doc "Robot pose in traversability frame"
 
     operation("calculateGoals").
-        arg("area", "ugv_nav4d::Box").
+        arg("area", "ugv_nav4d::OrientedBoxConfig").
         doc("Triggers the calculation of a new list of goals")
         
     port_driven 'map', 'pose_samples'
