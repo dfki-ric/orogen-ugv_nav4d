@@ -58,6 +58,8 @@ task_context "AreaExploration" do
         
     output_port('goal_out_best', 'base/samples/RigidBodyState').
         doc("Just the first (best) goal of the goal_out list.")
+        
+    output_port "debugDrawings", "/boost/shared_ptr</vizkit3dDebugDrawings/CommandBuffer>"
 
     input_port("pose_samples", "base/samples/RigidBodyState").
         needs_reliable_connection.

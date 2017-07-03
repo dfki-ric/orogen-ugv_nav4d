@@ -3,6 +3,7 @@
 #include "AreaExploration.hpp"
 #include <ugv_nav4d/AreaExplorer.hpp>
 #include <ugv_nav4d/FrontierGenerator.hpp>
+#include <vizkit3d_debug_drawings/DebugDrawing.h>
 
 using namespace ugv_nav4d;
 
@@ -78,6 +79,8 @@ bool AreaExploration::startHook()
 }
 void AreaExploration::updateHook()
 {
+    CONFIGURE_DEBUG_DRAWINGS_USE_PORT_NO_THROW(&_debugDrawings);
+    
     AreaExplorationBase::updateHook();
     
     if(_pose_samples.readNewest(curPose, false) == RTT::NewData)
