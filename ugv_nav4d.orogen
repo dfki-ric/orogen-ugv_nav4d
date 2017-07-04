@@ -65,9 +65,9 @@ task_context "AreaExploration" do
         doc("Just the first (best) goal of the goal_out list.")
         
     output_port "debugDrawings", "/boost/shared_ptr</vizkit3dDebugDrawings/CommandBuffer>"
+    output_port "tr_map", spatio_temporal('/maps/grid/TraversabilityBaseMap3d')
 
     input_port("pose_samples", "base/samples/RigidBodyState").
-        needs_reliable_connection.
         doc "Robot pose in traversability frame"
 
     operation("calculateGoals").

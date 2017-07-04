@@ -47,6 +47,12 @@ void AreaExploration::calculateGoals(::ugv_nav4d::OrientedBoxConfig const & area
     {
         state(AREA_EXPLORED);
     }
+    
+    envire::core::SpatioTemporal<maps::grid::TraversabilityBaseMap3d> foo;
+    foo.frame_id = "FOO";
+    foo.data = frontGen->getTraversabilityBaseMap();
+    
+    _tr_map.write(foo);
 }
 
 void AreaExploration::clearPlannerMap()
