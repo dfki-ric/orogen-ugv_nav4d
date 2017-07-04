@@ -22,6 +22,9 @@ task_context "PathPlanner" do
     property "primConfig", "motion_planning_libraries::SplinePrimitivesConfig"
     property "travConfig", "ugv_nav4d::TraversabilityConfig"
     property "mobilityConfig", "motion_planning_libraries::Mobility"
+    property("distToGround","double", 0.0)
+    property("initialPatchRadius","double", 0.0)
+    
     input_port "map", spatio_temporal('/maps/grid/MLSMapKalman')
     output_port "trajectory", "std::vector<base/Trajectory>"
     output_port "tr_map", spatio_temporal('/maps/grid/TraversabilityBaseMap3d')
@@ -47,7 +50,9 @@ task_context "AreaExploration" do
     
     property "travConfig", "ugv_nav4d::TraversabilityConfig"
     property "costConfig", "ugv_nav4d::CostFunctionParameters"
-    
+    property("distToGround","double", 0.0)
+    property("initialPatchRadius","double", 0.0)
+
     operation("clearPlannerMap").
         doc("Clears the internal exploration map. All obstacles will be readded by receiving the next trav map.")
 

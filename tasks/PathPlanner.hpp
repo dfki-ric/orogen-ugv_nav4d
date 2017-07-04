@@ -27,7 +27,7 @@ namespace ugv_nav4d{
 
     protected:
         Planner *planner;
-
+        bool initalPatchAdded;
 
         void setIfNotSet(const PathPlannerBase::States &newState);
 

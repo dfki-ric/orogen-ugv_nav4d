@@ -84,7 +84,13 @@ void AreaExploration::updateHook()
     AreaExplorationBase::updateHook();
     
     if(_pose_samples.readNewest(curPose, false) == RTT::NewData)
+    {
+        if(!poseValid)
+        {
+            frontGen->setInitialPatch(curPose.getTransform(), _distToGround.get(), _initialPatchRadius.get());
+        }
         poseValid = true;
+    }
     
     envire::core::SpatioTemporal<maps::grid::MLSMapKalman> map;
     if(_map.readNewest(map, false) == RTT::NewData)

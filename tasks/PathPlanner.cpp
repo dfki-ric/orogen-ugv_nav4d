@@ -48,6 +48,9 @@ bool PathPlanner::startHook()
 {
     if (! PathPlannerBase::startHook())
         return false;
+    
+    initalPatchAdded = false;
+    
     return true;
 }
 void PathPlanner::updateHook()
@@ -75,6 +78,11 @@ void PathPlanner::updateHook()
         return;
     } else
     {
+        if(!initalPatchAdded)
+        {
+            planner->setInitialPatch(start_pose.getTransform(), _distToGround.get(), _initialPatchRadius.get());
+            initalPatchAdded = true;
+        }
         std::cout << "StartPose: " << start_pose.position.x() << " "
             << start_pose.position.y() << " "
             << start_pose.position.z() << " " << std::endl;
