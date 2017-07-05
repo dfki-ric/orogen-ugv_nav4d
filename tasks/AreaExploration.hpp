@@ -36,6 +36,9 @@ namespace ugv_nav4d{
         bool poseValid;
         bool mapValid;
         
+        bool generateFrontiers;
+        ugv_nav4d::OrientedBoxConfig area;
+        
         /* Triggers the calculation of a new list of goals
          */
         virtual void calculateGoals(::ugv_nav4d::OrientedBoxConfig const & area);

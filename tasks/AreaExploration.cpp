@@ -35,24 +35,8 @@ void AreaExploration::calculateGoals(::ugv_nav4d::OrientedBoxConfig const & area
         return;
     }
     
-    state(PLANNING);
-    
-    std::vector<base::samples::RigidBodyState> outFrontiers;
-    if(explorer->getFrontiers(curPose.position, area, outFrontiers))
-    {
-        state(GOALS_GENERATED);
-        _goals_out.write(outFrontiers);
-    }
-    else
-    {
-        state(AREA_EXPLORED);
-    }
-    
-    envire::core::SpatioTemporal<maps::grid::TraversabilityBaseMap3d> foo;
-    foo.frame_id = "FOO";
-    foo.data = frontGen->getTraversabilityBaseMap();
-    
-    _tr_map.write(foo);
+    generateFrontiers = true;
+    this->area = area;
 }
 
 void AreaExploration::clearPlannerMap()
@@ -79,6 +63,8 @@ bool AreaExploration::startHook()
     poseValid = false;
     mapValid = false;
     
+    generateFrontiers = false;
+    
     if (! AreaExplorationBase::startHook())
         return false;
     return true;
@@ -88,7 +74,6 @@ void AreaExploration::updateHook()
     CONFIGURE_DEBUG_DRAWINGS_USE_PORT_NO_THROW(&_debugDrawings);
     
     AreaExplorationBase::updateHook();
-    
     if(_pose_samples.readNewest(curPose, false) == RTT::NewData)
     {
         if(!poseValid)
@@ -103,6 +88,30 @@ void AreaExploration::updateHook()
     {
         mapValid = true;
         frontGen->updateMap(map.data);
+    }
+    
+    if(generateFrontiers)
+    {
+        state(PLANNING);
+        
+        std::vector<base::samples::RigidBodyState> outFrontiers;
+        if(explorer->getFrontiers(curPose.position, area, outFrontiers))
+        {
+            state(GOALS_GENERATED);
+            _goals_out.write(outFrontiers);
+        }
+        else
+        {
+            state(AREA_EXPLORED);
+        }
+        
+        envire::core::SpatioTemporal<maps::grid::TraversabilityBaseMap3d> foo;
+        foo.frame_id = "AreaExploration";
+        foo.data = frontGen->getTraversabilityBaseMap();
+        
+        _tr_map.write(foo);
+        
+        generateFrontiers = false;
     }
 }
 void AreaExploration::errorHook()
