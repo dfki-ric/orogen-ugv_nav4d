@@ -83,9 +83,9 @@ void PathPlanner::updateHook()
             planner->setInitialPatch(start_pose.getTransform(), _distToGround.get(), _initialPatchRadius.get());
             initalPatchAdded = true;
         }
-        std::cout << "StartPose: " << start_pose.position.x() << " "
-            << start_pose.position.y() << " "
-            << start_pose.position.z() << " " << std::endl;
+//         std::cout << "StartPose: " << start_pose.position.x() << " "
+//             << start_pose.position.y() << " "
+//             << start_pose.position.z() << " " << std::endl;
     } 
 
     auto goal_pose_status = _goal_position.readNewest(stop_pose);
@@ -96,10 +96,9 @@ void PathPlanner::updateHook()
         return;
     } else
     {
-        std::cout << "GoalPose: " << stop_pose.position.x() << " "
-            << stop_pose.position.y() << " "
-            << stop_pose.position.z() << " " << std::endl;
-                  
+//         std::cout << "GoalPose: " << stop_pose.position.x() << " "
+//             << stop_pose.position.y() << " "
+//             << stop_pose.position.z() << " " << std::endl;
     } 
 
     if (goal_pose_status == RTT::NewData || map_status == RTT::NewData)
