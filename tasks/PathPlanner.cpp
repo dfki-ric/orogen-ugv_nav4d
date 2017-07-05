@@ -108,7 +108,7 @@ void PathPlanner::updateHook()
         if(planner->plan(_maxTime.value(), start_pose, stop_pose, trajectory))
         {
             _trajectory.write(trajectory);
-            
+            _motionPrims.write(planner->getMotions());
             setIfNotSet(FOUND_SOLUTION);
         } else
         {

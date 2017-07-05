@@ -1,18 +1,25 @@
 name "ugv_nav4d"
 
+import_types_from "base"
 import_types_from "envire_maps"
-#import_types_from "motion_planning_libraries"
+import_types_from "ugv_nav4dTypes.hpp"
+typekit.opaque_type 'DiscreteTheta', 'wrappers/DiscreteTheta'
+
+import_types_from "envire_maps"
+
 import_types_from "ugv_nav4d/TraversabilityConfig.hpp"
 import_types_from "ugv_nav4d/Config.hpp"
 import_types_from "ugv_nav4d/OrientedBox.hpp"
+
+import_types_from "ugv_nav4d/DiscreteTheta.hpp"
+import_types_from "ugv_nav4d/PreComputedMotions.hpp"
+
 import_types_from "motion_planning_libraries/sbpl/SplinePrimitivesConfig.hpp"
 import_types_from "motion_planning_libraries/Config.hpp"
 using_library "ugv_nav4d"
 import_types_from "vizkit3d_debug_drawings"
 
 
-
-import_types_from "base"
 
 
 task_context "PathPlanner" do
@@ -27,8 +34,12 @@ task_context "PathPlanner" do
     
     input_port "map", spatio_temporal('/maps/grid/MLSMapKalman')
     output_port "trajectory", "std::vector<base/Trajectory>"
+
     output_port "tr_map", spatio_temporal('/maps/grid/TraversabilityBaseMap3d')
     output_port "debugDrawings", "/boost/shared_ptr</vizkit3dDebugDrawings/CommandBuffer>"
+
+    output_port "motionPrims", "std::vector<ugv_nav4d::Motion>"
+
     
     input_port('start_position', 'base/samples/RigidBodyState')
     input_port('goal_position', 'base/samples/RigidBodyState')
