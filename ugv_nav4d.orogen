@@ -40,9 +40,11 @@ task_context "PathPlanner" do
 
     output_port "motionPrims", "std::vector<ugv_nav4d::Motion>"
 
-    
-    input_port('start_position', 'base/samples/RigidBodyState')
-    input_port('goal_position', 'base/samples/RigidBodyState')
+    operation("triggerPathPlanning").
+        arg("start_position", "base/samples/RigidBodyState").
+        arg("goal_position", "base/samples/RigidBodyState").
+        returns("int").
+        doc("Triggers planning of a new path")
 
     
     runtime_states :NO_MAP,

@@ -27,6 +27,18 @@ void PathPlanner::setIfNotSet(const PathPlannerBase::States& newState)
         state(newState);
 }
 
+int32_t PathPlanner::triggerPathPlanning(const base::samples::RigidBodyState& start_position, const base::samples::RigidBodyState& goal_position)
+{
+    if(!gotMap)
+        return 0;
+
+    start_pose = start_position;
+    stop_pose = goal_position;
+    
+    executePlanning = true;
+    
+    return 1;
+}
 
 /// The following lines are template definitions for the various state machine
 // hooks defined by Orocos::RTT. See PathPlanner.hpp for more detailed
@@ -50,7 +62,8 @@ bool PathPlanner::startHook()
         return false;
     
     initalPatchAdded = false;
-    
+    executePlanning = false;
+    gotMap = false;
     return true;
 }
 void PathPlanner::updateHook()
@@ -58,7 +71,7 @@ void PathPlanner::updateHook()
     CONFIGURE_DEBUG_DRAWINGS_USE_PORT_NO_THROW(&_debugDrawings);
     
     envire::core::SpatioTemporal<maps::grid::MLSMapKalman> map;
-    auto map_status = _map.readNewest(map);
+    auto map_status = _map.readNewest(map, false);
 
     if(map_status == RTT::NoData)
     {
@@ -66,43 +79,19 @@ void PathPlanner::updateHook()
         return;
     } else if(map_status == RTT::NewData)
     {
+        gotMap = true;
         planner->updateMap(map.getData());
     } 
     
-    base::samples::RigidBodyState start_pose;
-    base::samples::RigidBodyState stop_pose;
     
-    if(_start_position.readNewest(start_pose) == RTT::NoData)
-    {
-        setIfNotSet(NO_START);
-        return;
-    } else
+    if(executePlanning)
     {
         if(!initalPatchAdded)
         {
             planner->setInitialPatch(start_pose.getTransform(), _distToGround.get(), _initialPatchRadius.get());
             initalPatchAdded = true;
         }
-//         std::cout << "StartPose: " << start_pose.position.x() << " "
-//             << start_pose.position.y() << " "
-//             << start_pose.position.z() << " " << std::endl;
-    } 
-
-    auto goal_pose_status = _goal_position.readNewest(stop_pose);
-
-    if(goal_pose_status == RTT::NoData)
-    {
-        setIfNotSet(NO_GOAL);        
-        return;
-    } else
-    {
-//         std::cout << "GoalPose: " << stop_pose.position.x() << " "
-//             << stop_pose.position.y() << " "
-//             << stop_pose.position.z() << " " << std::endl;
-    } 
-
-    if (goal_pose_status == RTT::NewData || map_status == RTT::NewData)
-    {
+        
         setIfNotSet(PLANNING);
         std::vector<base::Trajectory> trajectory;
         if(planner->plan(_maxTime.value(), start_pose, stop_pose, trajectory))
@@ -120,6 +109,7 @@ void PathPlanner::updateHook()
         strmap.frame_id = "Traversability";
         
         _tr_map.write(strmap);
+        executePlanning = false;
     }
     
     PathPlannerBase::updateHook();
