@@ -68,7 +68,7 @@ bool PathPlanner::startHook()
 }
 void PathPlanner::updateHook()
 {
-    CONFIGURE_DEBUG_DRAWINGS_USE_PORT_NO_THROW(&_debugDrawings);
+    CONFIGURE_DEBUG_DRAWINGS_USE_PORT_NO_THROW(this);
     
     envire::core::SpatioTemporal<maps::grid::MLSMapKalman> map;
     auto map_status = _map.readNewest(map, false);

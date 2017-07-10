@@ -71,7 +71,7 @@ bool AreaExploration::startHook()
 }
 void AreaExploration::updateHook()
 {
-    CONFIGURE_DEBUG_DRAWINGS_USE_PORT_NO_THROW(&_debugDrawings);
+    CONFIGURE_DEBUG_DRAWINGS_USE_PORT_NO_THROW(this);
     
     AreaExplorationBase::updateHook();
     if(_pose_samples.readNewest(curPose, false) == RTT::NewData)
@@ -102,7 +102,10 @@ void AreaExploration::updateHook()
         }
         else
         {
+            //FIXME just for testing
             state(AREA_EXPLORED);
+            _goals_out.write(outFrontiers);
+//             state(AREA_EXPLORED);
         }
         
         envire::core::SpatioTemporal<maps::grid::TraversabilityBaseMap3d> foo;
