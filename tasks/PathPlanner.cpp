@@ -46,10 +46,13 @@ int32_t PathPlanner::triggerPathPlanning(const base::samples::RigidBodyState& st
 
 bool PathPlanner::configureHook()
 {
+    CONFIGURE_DEBUG_DRAWINGS_USE_PORT_NO_THROW(this);
     if(planner)
         delete planner;
 
     planner = new Planner(_primConfig.get(), _travConfig.get(), _mobilityConfig.get());
+    
+    FLUSH_DRAWINGS();
     
     if (! PathPlannerBase::configureHook())
         return false;
@@ -94,6 +97,10 @@ void PathPlanner::updateHook()
         
         setIfNotSet(PLANNING);
         std::vector<base::Trajectory> trajectory;
+        
+        CLEAR_DRAWING("planner_goal");
+        DRAW_AXES("planner_goal", stop_pose.position, stop_pose.orientation);
+        
         if(planner->plan(_maxTime.value(), start_pose, stop_pose, trajectory))
         {
             _trajectory.write(trajectory);
@@ -113,6 +120,7 @@ void PathPlanner::updateHook()
     }
     
     PathPlannerBase::updateHook();
+    FLUSH_DRAWINGS();
 }
 void PathPlanner::errorHook()
 {

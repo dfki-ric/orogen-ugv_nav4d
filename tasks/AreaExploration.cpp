@@ -50,9 +50,12 @@ void AreaExploration::clearPlannerMap()
 
 bool AreaExploration::configureHook()
 {
+    CONFIGURE_DEBUG_DRAWINGS_USE_PORT_NO_THROW(this);
+
     frontGen = std::make_shared<FrontierGenerator>(_travConfig.get(), _costConfig.get());
-    
     explorer = std::make_shared<AreaExplorer>(frontGen);
+
+    FLUSH_DRAWINGS();
     
     if (! AreaExplorationBase::configureHook())
         return false;
@@ -103,7 +106,7 @@ void AreaExploration::updateHook()
         else
         {
             //FIXME just for testing
-            state(AREA_EXPLORED);
+            state(GOALS_GENERATED);
             _goals_out.write(outFrontiers);
 //             state(AREA_EXPLORED);
         }
@@ -115,6 +118,8 @@ void AreaExploration::updateHook()
         _tr_map.write(foo);
         
         generateFrontiers = false;
+        
+    FLUSH_DRAWINGS();
     }
 }
 void AreaExploration::errorHook()
