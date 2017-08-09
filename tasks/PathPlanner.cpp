@@ -91,7 +91,7 @@ void PathPlanner::updateHook()
     {
         if(!initalPatchAdded)
         {
-            planner->setInitialPatch(start_pose.getTransform(), _distToGround.get(), _initialPatchRadius.get());
+            planner->setInitialPatch(start_pose.getTransform(), _initialPatchRadius.get());
             initalPatchAdded = true;
         }
         
