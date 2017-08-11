@@ -81,7 +81,7 @@ void AreaExploration::updateHook()
     {
         if(!poseValid)
         {
-            frontGen->setInitialPatch(curPose.getTransform(), _initialPatchRadius.get());
+            explorer->setInitialPatch(curPose.getTransform(), _initialPatchRadius.get());
         }
         poseValid = true;
     }
