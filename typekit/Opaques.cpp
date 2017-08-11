@@ -14,7 +14,7 @@
 void orogen_typekits::toIntermediate(::wrappers::DiscreteTheta& intermediate, DiscreteTheta const& real_type)
 {
     intermediate.theta = real_type.getTheta();
-    intermediate.numAngles = M_PI * 2.0 * real_type.getTheta() / real_type.getRadian();
+    intermediate.numAngles = real_type.getNumAngles();
 }
 
 void orogen_typekits::fromIntermediate(DiscreteTheta& real_type, ::wrappers::DiscreteTheta const& intermediate)
