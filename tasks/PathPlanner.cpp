@@ -52,6 +52,18 @@ bool PathPlanner::configureHook()
 
     planner = new Planner(_primConfig.get(), _travConfig.get(), _mobilityConfig.get());
     
+    planner->setTravMapCallback([&] () {
+        envire::core::SpatioTemporal<maps::grid::TraversabilityBaseMap3d> strmap;
+        strmap.data = planner->getTraversabilityMap();
+        strmap.frame_id = "Traversability";
+        
+        _tr_map.write(strmap);
+        
+        FLUSH_DRAWINGS();
+    });
+    
+
+    
     FLUSH_DRAWINGS();
     
     if (! PathPlannerBase::configureHook())
@@ -111,11 +123,6 @@ void PathPlanner::updateHook()
             setIfNotSet(NO_SOLUTION);
         }
         
-        envire::core::SpatioTemporal<maps::grid::TraversabilityBaseMap3d> strmap;
-        strmap.data = planner->getTraversabilityMap();
-        strmap.frame_id = "Traversability";
-        
-        _tr_map.write(strmap);
         executePlanning = false;
     }
     
