@@ -34,6 +34,8 @@ int32_t PathPlanner::triggerPathPlanning(const base::samples::RigidBodyState& st
 
     start_pose = start_position;
     stop_pose = goal_position;
+    //goal position is in ground frame, transform to body frame
+    stop_pose.position += stop_pose.orientation * Eigen::Vector3d(0,0, _travConfig.get().distToGround);
     
     executePlanning = true;
     
