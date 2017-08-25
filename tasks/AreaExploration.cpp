@@ -84,8 +84,8 @@ void AreaExploration::updateHook()
     if(_map.readNewest(map, false) == RTT::NewData)
     {
         mapValid = true;
-        frontGen->updateMap(map.data);
-        coverage->updateMLS(map.data);
+        frontGen->updateMap(map.data, &coverage->getCoverage());
+        coverage->setFrame(frontGen->getTraversabilityBaseMap());
     }
 
     if(_pose_samples.readNewest(curPose, false) == RTT::NewData)
@@ -138,11 +138,12 @@ void AreaExploration::updateHook()
 //             state(AREA_EXPLORED);
         }
         
-        envire::core::SpatioTemporal<maps::grid::TraversabilityBaseMap3d> foo;
-        foo.frame_id = "AreaExploration";
-        foo.data = frontGen->getTraversabilityBaseMap();
-        
-        _tr_map.write(foo);
+        {
+            envire::core::SpatioTemporal<maps::grid::TraversabilityBaseMap3d> trMap;
+            trMap.frame_id = "AreaExploration";
+            trMap.data = frontGen->getTraversabilityBaseMap();
+            _tr_map.write(trMap);
+        }
         
         generateFrontiers = false;
         
