@@ -115,7 +115,7 @@ void AreaExploration::updateHook()
         {
             state(GOALS_GENERATED);
             
-            for(auto f : outFrontiers)
+            for(auto &f : outFrontiers)
             {
                 //convert to ground frame
                 f.position +=  f.orientation * Eigen::Vector3d(0,0, -_travConfig.get().distToGround);
@@ -128,7 +128,7 @@ void AreaExploration::updateHook()
             //FIXME just for testing
             state(GOALS_GENERATED);
 
-            for(auto f : outFrontiers)
+            for(auto &f : outFrontiers)
             {
                 //convert to ground frame
                 f.position +=  f.orientation * Eigen::Vector3d(0,0, -_travConfig.get().distToGround);
