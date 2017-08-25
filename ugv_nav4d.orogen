@@ -78,6 +78,8 @@ task_context "AreaExploration" do
     output_port "debugDrawings", "/boost/shared_ptr</vizkit3dDebugDrawings/CommandBuffer>"
     output_port "tr_map", spatio_temporal('/maps/grid/TraversabilityBaseMap3d')
 
+    output_port "coverage", "/maps/grid/MLSMapBase"
+
     input_port("pose_samples", "base/samples/RigidBodyState").
         doc "Robot pose in traversability frame"
 

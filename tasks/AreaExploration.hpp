@@ -5,10 +5,19 @@
 
 #include "ugv_nav4d/AreaExplorationBase.hpp"
 
+namespace maps {
+namespace operations {
+
+class CoverageTracker;
+
+}  // namespace operations
+}  // namespace maps
+
 namespace ugv_nav4d{
     class FrontierGenerator;
     class AreaExplorer;
     
+
 
     /*! \class AreaExploration
      * \brief The task context provides and requires services. It uses an ExecutionEngine to perform its functions.
@@ -31,8 +40,10 @@ namespace ugv_nav4d{
 
         std::shared_ptr<FrontierGenerator> frontGen;
         std::shared_ptr<AreaExplorer> explorer;
-        
-        base::samples::RigidBodyState curPose;
+        std::shared_ptr<maps::operations::CoverageTracker> coverage;
+
+        envire::core::SpatioTemporal<maps::grid::MLSMapKalman> map;
+        base::samples::RigidBodyState curPose, previousPose;
         bool poseValid;
         bool mapValid;
         

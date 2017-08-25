@@ -5,6 +5,8 @@
 #include <ugv_nav4d/FrontierGenerator.hpp>
 #include <vizkit3d_debug_drawings/DebugDrawing.h>
 
+#include <maps/operations/CoverageMapGeneration.hpp>
+
 using namespace ugv_nav4d;
 
 AreaExploration::AreaExploration(std::string const& name)
@@ -54,6 +56,7 @@ bool AreaExploration::configureHook()
 
     frontGen = std::make_shared<FrontierGenerator>(_travConfig.get(), _costConfig.get());
     explorer = std::make_shared<AreaExplorer>(frontGen);
+    coverage = std::make_shared<maps::operations::CoverageTracker>();
 
     FLUSH_DRAWINGS();
     
@@ -77,20 +80,30 @@ void AreaExploration::updateHook()
     CONFIGURE_DEBUG_DRAWINGS_USE_PORT_NO_THROW(this);
     
     AreaExplorationBase::updateHook();
+
+    if(_map.readNewest(map, false) == RTT::NewData)
+    {
+        mapValid = true;
+        frontGen->updateMap(map.data);
+        coverage->updateMLS(map.data);
+    }
+
     if(_pose_samples.readNewest(curPose, false) == RTT::NewData)
     {
         if(!poseValid)
         {
             explorer->setInitialPatch(curPose.getTransform(), _initialPatchRadius.get());
+            previousPose = curPose;
         }
         poseValid = true;
-    }
-    
-    envire::core::SpatioTemporal<maps::grid::MLSMapKalman> map;
-    if(_map.readNewest(map, false) == RTT::NewData)
-    {
-        mapValid = true;
-        frontGen->updateMap(map.data);
+        if((curPose.position - previousPose.position).norm() > 0.05 && coverage && mapValid) // TODO make configurable
+        {
+            std::cout << "Adding coverage at " << curPose.position.transpose() << '\n';
+            // TODO AngleSegment and orientation are ignored at the moment
+            coverage->addCoverage(1.0, base::AngleSegment{}, curPose.getPose());
+            _coverage.write(coverage->getCoverage());
+            previousPose = curPose;
+        }
     }
     
     if(generateFrontiers)
