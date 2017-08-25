@@ -114,12 +114,26 @@ void AreaExploration::updateHook()
         if(explorer->getFrontiers(curPose.position, area, outFrontiers))
         {
             state(GOALS_GENERATED);
+            
+            for(auto f : outFrontiers)
+            {
+                //convert to ground frame
+                f.position +=  f.orientation * Eigen::Vector3d(0,0, -_travConfig.get().distToGround);
+            }
+            
             _goals_out.write(outFrontiers);
         }
         else
         {
             //FIXME just for testing
             state(GOALS_GENERATED);
+
+            for(auto f : outFrontiers)
+            {
+                //convert to ground frame
+                f.position +=  f.orientation * Eigen::Vector3d(0,0, -_travConfig.get().distToGround);
+            }
+            
             _goals_out.write(outFrontiers);
 //             state(AREA_EXPLORED);
         }
