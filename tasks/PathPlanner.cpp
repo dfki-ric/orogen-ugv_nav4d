@@ -49,10 +49,8 @@ int32_t PathPlanner::triggerPathPlanning(const base::samples::RigidBodyState& st
 bool PathPlanner::configureHook()
 {
     CONFIGURE_DEBUG_DRAWINGS_USE_PORT_NO_THROW(this);
-    if(planner)
-        delete planner;
 
-    planner = new Planner(_primConfig.get(), _travConfig.get(), _mobilityConfig.get());
+    planner.reset(new Planner(_primConfig.get(), _travConfig.get(), _mobilityConfig.get()));
     
     planner->setTravMapCallback([&] () {
         envire::core::SpatioTemporal<maps::grid::TraversabilityBaseMap3d> strmap;

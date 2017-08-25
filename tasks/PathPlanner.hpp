@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ugv_nav4d/PathPlannerBase.hpp"
+#include <memory>
 
 namespace ugv_nav4d{
 
@@ -26,7 +27,7 @@ namespace ugv_nav4d{
     protected:
 
     protected:
-        Planner *planner;
+        std::unique_ptr<Planner> planner;
         bool initalPatchAdded;
         bool executePlanning;
         bool gotMap;
