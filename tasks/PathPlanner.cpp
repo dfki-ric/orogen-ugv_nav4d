@@ -23,7 +23,7 @@ PathPlanner::~PathPlanner()
 
 void PathPlanner::setIfNotSet(const PathPlannerBase::States& newState)
 {
-    if(state() != newState);
+    if(state() != newState)
         state(newState);
 }
 
