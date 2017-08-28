@@ -116,7 +116,7 @@ void PathPlanner::updateHook()
         CLEAR_DRAWING("planner_goal");
         DRAW_AXES("planner_goal", stop_pose.position, stop_pose.orientation);
         
-        Planner::PLANNING_RESULT res = planner->plan(_maxTime.value(), start_pose, stop_pose, trajectory);
+        Planner::PLANNING_RESULT res = planner->plan(_maxTime.value(), start_pose, stop_pose, trajectory, _dumpOnError.get());
         switch(res)
         {
             case Planner::FOUND_SOLUTION:
