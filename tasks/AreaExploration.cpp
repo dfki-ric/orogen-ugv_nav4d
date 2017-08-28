@@ -56,7 +56,12 @@ bool AreaExploration::configureHook()
 
     frontGen = std::make_shared<FrontierGenerator>(_travConfig.get(), _costConfig.get());
     explorer = std::make_shared<AreaExplorer>(frontGen);
-    coverage = std::make_shared<maps::operations::CoverageTracker>();
+
+    if(_coverageRadius.get() > 0)
+    {
+        coverage = std::make_shared<maps::operations::CoverageTracker>();
+    }
+    else coverage.reset();
 
     FLUSH_DRAWINGS();
     
@@ -84,8 +89,9 @@ void AreaExploration::updateHook()
     if(_map.readNewest(map, false) == RTT::NewData)
     {
         mapValid = true;
-        frontGen->updateMap(map.data, &coverage->getCoverage());
-        coverage->setFrame(frontGen->getTraversabilityBaseMap());
+        frontGen->updateMap(map.data, coverage ? &coverage->getCoverage() : nullptr);
+        if(coverage)
+            coverage->setFrame(frontGen->getTraversabilityBaseMap());
     }
 
     if(_pose_samples.readNewest(curPose, false) == RTT::NewData)
@@ -96,11 +102,11 @@ void AreaExploration::updateHook()
             previousPose = curPose;
         }
         poseValid = true;
-        if((curPose.position - previousPose.position).norm() > 0.05 && coverage && mapValid) // TODO make configurable
+        if(coverage && mapValid && (curPose.position - previousPose.position).norm() > 0.05) // TODO make configurable
         {
             std::cout << "Adding coverage at " << curPose.position.transpose() << '\n';
             // TODO AngleSegment and orientation are ignored at the moment
-            coverage->addCoverage(1.0, base::AngleSegment{}, curPose.getPose());
+            coverage->addCoverage(_coverageRadius.get(), base::AngleSegment{}, curPose.getPose());
             _coverage.write(coverage->getCoverage());
             previousPose = curPose;
         }

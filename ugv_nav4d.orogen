@@ -68,6 +68,9 @@ task_context "AreaExploration" do
     property "costConfig", "ugv_nav4d::CostFunctionParameters"
     property("initialPatchRadius","double", 0.0)
 
+    #if positive, mark a sphere of the given radius as already covered (i.e., filter it out as goal position)
+    property("coverageRadius", "double", 1.0)
+
     operation("clearPlannerMap").
         doc("Clears the internal exploration map. All obstacles will be readded by receiving the next trav map.")
 
