@@ -39,6 +39,9 @@ task_context "PathPlanner" do
 
     output_port "motionPrims", "std::vector<ugv_nav4d::Motion>"
 
+    output_port "planning_start", "base/samples/RigidBodyState"
+    output_port "planning_goal", "base/samples/RigidBodyState"
+
     operation("triggerPathPlanning").
         arg("start_position", "base/samples/RigidBodyState").
         arg("goal_position", "base/samples/RigidBodyState").
@@ -47,8 +50,9 @@ task_context "PathPlanner" do
 
     
     runtime_states :NO_MAP,
-        :NO_GOAL,
-        :NO_START,
+        :GOAL_INVALID,
+        :START_INVALID,
+        :INTERNAL_ERROR,
         :PLANNING,
         :NO_SOLUTION,
         :FOUND_SOLUTION

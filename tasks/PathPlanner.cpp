@@ -37,6 +37,9 @@ int32_t PathPlanner::triggerPathPlanning(const base::samples::RigidBodyState& st
     //goal position is in ground frame, transform to body frame
     stop_pose.position += stop_pose.orientation * Eigen::Vector3d(0,0, _travConfig.get().distToGround);
     
+    _planning_start.write(start_position);
+    _planning_goal.write(goal_position);
+    
     executePlanning = true;
     
     return 1;
@@ -113,14 +116,30 @@ void PathPlanner::updateHook()
         CLEAR_DRAWING("planner_goal");
         DRAW_AXES("planner_goal", stop_pose.position, stop_pose.orientation);
         
-        if(planner->plan(_maxTime.value(), start_pose, stop_pose, trajectory))
+        Planner::PLANNING_RESULT res = planner->plan(_maxTime.value(), start_pose, stop_pose, trajectory);
+        switch(res)
         {
-            _trajectory.write(trajectory);
-            _motionPrims.write(planner->getMotions());
-            setIfNotSet(FOUND_SOLUTION);
-        } else
-        {
-            setIfNotSet(NO_SOLUTION);
+            case Planner::FOUND_SOLUTION:
+                _trajectory.write(trajectory);
+                _motionPrims.write(planner->getMotions());
+                setIfNotSet(FOUND_SOLUTION);
+                break;
+            
+            case Planner::GOAL_INVALID:
+                setIfNotSet(ugv_nav4d::PathPlannerBase::GOAL_INVALID);
+                break;
+            case Planner::START_INVALID:
+                setIfNotSet(ugv_nav4d::PathPlannerBase::START_INVALID);
+                break;
+            case Planner::INTERNAL_ERROR:
+                setIfNotSet(ugv_nav4d::PathPlannerBase::INTERNAL_ERROR);
+                break;
+            case Planner::NO_SOLUTION:
+                setIfNotSet(ugv_nav4d::PathPlannerBase::NO_SOLUTION);
+                break;
+            case Planner::NO_MAP:
+                setIfNotSet(ugv_nav4d::PathPlannerBase::NO_MAP);
+                break;
         }
         
         executePlanning = false;
@@ -139,5 +158,6 @@ void PathPlanner::stopHook()
 }
 void PathPlanner::cleanupHook()
 {
+    planner.reset();
     PathPlannerBase::cleanupHook();
 }
