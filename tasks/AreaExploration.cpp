@@ -102,7 +102,7 @@ void AreaExploration::updateHook()
             previousPose = curPose;
         }
         poseValid = true;
-        if(coverage && mapValid && (curPose.position - previousPose.position).norm() > 0.05) // TODO make configurable
+        if(coverage && mapValid && (curPose.position - previousPose.position).norm() > _coverageUpdateDistance.get())
         {
             std::cout << "Adding coverage at " << curPose.position.transpose() << '\n';
             // TODO AngleSegment and orientation are ignored at the moment
