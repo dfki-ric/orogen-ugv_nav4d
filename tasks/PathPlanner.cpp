@@ -4,6 +4,7 @@
 #include <ugv_nav4d/Planner.hpp>
 #include <envire_core/items/SpatioTemporal.hpp>
 #include <vizkit3d_debug_drawings/DebugDrawing.h>
+#include <trajectory_follower/SubTrajectory.hpp>
 
 using namespace ugv_nav4d;
 
@@ -26,6 +27,17 @@ void PathPlanner::setIfNotSet(const PathPlannerBase::States& newState)
     if(state() != newState)
         state(newState);
 }
+
+void PathPlanner::writeTravMap()
+{
+    envire::core::SpatioTemporal<maps::grid::TraversabilityBaseMap3d> strmap;
+    strmap.data = planner->getTraversabilityMap();
+    strmap.frame_id = "Traversability";
+    
+    _tr_map.write(strmap);
+}
+
+
 
 int32_t PathPlanner::triggerPathPlanning(const base::samples::RigidBodyState& start_position, const base::samples::RigidBodyState& goal_position)
 {
@@ -55,13 +67,9 @@ bool PathPlanner::configureHook()
 
     planner.reset(new Planner(_primConfig.get(), _travConfig.get(), _mobilityConfig.get()));
     
-    planner->setTravMapCallback([&] () {
-        envire::core::SpatioTemporal<maps::grid::TraversabilityBaseMap3d> strmap;
-        strmap.data = planner->getTraversabilityMap();
-        strmap.frame_id = "Traversability";
-        
-        _tr_map.write(strmap);
-        
+    planner->setTravMapCallback([&] () 
+    {
+        writeTravMap();
         FLUSH_DRAWINGS();
     });
     
@@ -106,6 +114,7 @@ void PathPlanner::updateHook()
     {
         if(!initalPatchAdded)
         {
+            std::cout << "ADDING INITIAL PATCH TASK" << std::endl;
             planner->setInitialPatch(start_pose.getTransform(), _initialPatchRadius.get());
             initalPatchAdded = true;
         }
@@ -117,10 +126,19 @@ void PathPlanner::updateHook()
         DRAW_AXES("planner_goal", stop_pose.position, stop_pose.orientation);
         
         Planner::PLANNING_RESULT res = planner->plan(_maxTime.value(), start_pose, stop_pose, trajectory, _dumpOnError.get());
+        
+        writeTravMap();
+        
+        std::vector<trajectory_follower::SubTrajectory> subTrajectories;
+        for(const base::Trajectory& traj : trajectory)
+        {
+            subTrajectories.emplace_back(traj);
+        }
+        
         switch(res)
         {
             case Planner::FOUND_SOLUTION:
-                _trajectory.write(trajectory);
+                _trajectory.write(subTrajectories);
                 _motionPrims.write(planner->getMotions());
                 setIfNotSet(FOUND_SOLUTION);
                 break;

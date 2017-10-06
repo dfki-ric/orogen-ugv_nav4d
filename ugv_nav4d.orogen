@@ -16,8 +16,12 @@ import_types_from "ugv_nav4d/PreComputedMotions.hpp"
 
 import_types_from "motion_planning_libraries/sbpl/SplinePrimitivesConfig.hpp"
 import_types_from "motion_planning_libraries/Config.hpp"
-using_library "ugv_nav4d"
+
+import_types_from "trajectory_follower/SubTrajectory.hpp"
 import_types_from "vizkit3d_debug_drawings"
+
+using_library "ugv_nav4d"
+using_library "trajectory_follower"
 
 
 
@@ -33,7 +37,7 @@ task_context "PathPlanner" do
     property("dumpOnError","int", 0)
     
     input_port "map", spatio_temporal('/maps/grid/MLSMapKalman')
-    output_port "trajectory", "std::vector<base/Trajectory>"
+    output_port "trajectory", "std::vector<trajectory_follower/SubTrajectory>"
 
     output_port "tr_map", spatio_temporal('/maps/grid/TraversabilityBaseMap3d')
     output_port "debugDrawings", "/boost/shared_ptr</vizkit3dDebugDrawings/CommandBuffer>"

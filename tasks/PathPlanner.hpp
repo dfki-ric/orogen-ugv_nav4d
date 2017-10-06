@@ -114,6 +114,9 @@ namespace ugv_nav4d{
          * before calling start() again.
          */
         void cleanupHook();
+        
+        /**Writes travMap to port */
+        void writeTravMap();
     };
 }
 
