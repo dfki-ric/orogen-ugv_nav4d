@@ -120,7 +120,7 @@ void PathPlanner::updateHook()
         }
         
         setIfNotSet(PLANNING);
-        std::vector<base::Trajectory> trajectory;
+        std::vector<trajectory_follower::SubTrajectory> trajectory;
         
         CLEAR_DRAWING("planner_goal");
         DRAW_AXES("planner_goal", stop_pose.position, stop_pose.orientation);
@@ -128,17 +128,11 @@ void PathPlanner::updateHook()
         Planner::PLANNING_RESULT res = planner->plan(_maxTime.value(), start_pose, stop_pose, trajectory, _dumpOnError.get());
         
         writeTravMap();
-        
-        std::vector<trajectory_follower::SubTrajectory> subTrajectories;
-        for(const base::Trajectory& traj : trajectory)
-        {
-            subTrajectories.emplace_back(traj);
-        }
-        
+               
         switch(res)
         {
             case Planner::FOUND_SOLUTION:
-                _trajectory.write(subTrajectories);
+                _trajectory.write(trajectory);
                 _motionPrims.write(planner->getMotions());
                 setIfNotSet(FOUND_SOLUTION);
                 break;
