@@ -27,9 +27,17 @@ bool PoseWatchdog::configureHook()
     if (! PoseWatchdogBase::configureHook())
         return false;
     
-    gotMap = false;
-    gotPose = false;
-    gotTraj = false;
+    resetState = false;
+    
+    mapGenerated = false;
+    
+    gotInitialMap = false;
+    gotInitialPose = false;
+    gotInitialTraj = false;
+    gotNewMap = false;
+    gotNewPose = false;
+    gotNewTraj = false;
+    
     haltCommand.heading = base::Angle::fromRad(0);
     haltCommand.translation = 0;
     haltCommand.rotation = 0;
@@ -37,6 +45,23 @@ bool PoseWatchdog::configureHook()
     nanCommand.heading = base::Angle::fromRad(std::nan(""));
     nanCommand.translation = std::nan("");
     nanCommand.rotation = std::nan("");
+    
+    
+    stateExecutes.resize(12); //NOTE increase if new states added
+    stateExecutes[INIT] = nullptr;
+    stateExecutes[PRE_OPERATIONAL] = nullptr;
+    stateExecutes[FATAL_ERROR] = nullptr;
+    stateExecutes[EXCEPTION] = nullptr;
+    stateExecutes[STOPPED] = nullptr;
+    stateExecutes[RUNNING] = std::bind(&PoseWatchdog::execRunning, this);
+    stateExecutes[RUNTIME_ERROR] = nullptr;
+    stateExecutes[ERROR] = nullptr;
+    stateExecutes[RESETTED] = std::bind(&PoseWatchdog::execResetted, this);
+    stateExecutes[TRAJECTORY_ABORTED] = std::bind(&PoseWatchdog::execAborted, this);
+    stateExecutes[WAITING_FOR_DATA] = std::bind(&PoseWatchdog::execWaitForData, this);
+    stateExecutes[WATCHING] = std::bind(&PoseWatchdog::execWatching, this);
+
+    obsMapGen.reset(new ObstacleMapGenerator3D(_travConfig.get()));
     
     return true;
 }
@@ -52,64 +77,108 @@ void PoseWatchdog::updateHook()
     
     //FIXME why is currentTrajectory a vector? Shouldn't it be just one SubTrajectory?
     
+    gotNewTraj = _currentTrajectory.readNewest(currentTrajectory, false) == RTT::NewData;
+    gotNewPose = _robot_pose.readNewest(pose, false) == RTT::NewData;
+    gotNewMap  = _map.readNewest(map, false) == RTT::NewData;
     
-    //the watchdog has to send either nan or an override command.
-    //if it stops sending anything the safety switch will go into TIMEOUT state.
     
-    switch(state())
+    //got first pose, configure initial patch
+    if(gotNewPose && !gotInitialPose)
     {
-        case RUNNING:
-            //first call to updateHook() after startHook was executed
-            state(WAITING_FOR_DATA);
-        case WAITING_FOR_DATA:
-            gotTraj |= _currentTrajectory.readNewest(currentTrajectory, false) == RTT::NewData;
-            gotPose |= _robot_pose.readNewest(pose, false) == RTT::NewData;
-            gotMap |= _tr_map.readNewest(map, false) == RTT::NewData;
-            
-            if(currentTrajectory.empty())
-                gotTraj = false;
-            
-            std::cout << "waiting... traj:" << gotTraj << ", pose:" << gotPose << ", map:" << gotMap << std::endl;
-            if(gotTraj && gotMap && gotPose)
-            {
-                std::cout << "Got data, starting to watch for pose error" << std::endl;
-                state(WATCHING);
-            }
-            break;
-        case WATCHING:
+        Eigen::Affine3d startPos = pose.getTransform();
+        startPos.translate(Eigen::Vector3d(0, 0, - _travConfig.value().distToGround));
+        obsMapGen->setInitialPatch(startPos, _initialPatchRadius.value());
+    }
+    
+    gotInitialPose |= gotNewPose;
+    gotInitialTraj |= gotNewTraj;
+    gotInitialMap |= gotNewMap;
+    
+    if((mapGenerated && gotNewMap) || 
+       (!mapGenerated && gotInitialMap && gotInitialPose))//<< this triggers the first map generation
+    {
+        updateMap();
+    }
+    
+    //execute the internal state machine
+    if(stateExecutes[state()] != nullptr)
+        stateExecutes[state()]();
+    else
+        throw std::runtime_error("State execute function missing for State: " + state());
+    
+    PoseWatchdogBase::updateHook();
+}
 
-            _motion_command_override.write(nanCommand);//tell safety that we are still alive
-            
-            //check pose whenever we get a new pose or a new map
-            //NOTE Do **not** use short circuit or operator here. We need to execute all reads on every loop!
-            if((_robot_pose.readNewest(pose, false) == RTT::NewData) |
-               (_tr_map.readNewest(map, false) == RTT::NewData) |
-               (_currentTrajectory.readNewest(currentTrajectory, false)) == RTT::NewData)
-            {
-//                 std::cout << "checking..." << std::endl;
-                if(!checkPose())
-                {
-                    DRAW_CYLINDER("watchdog_triggered", pose.position, base::Vector3d(0.03, 0.03, 0.4), vizkit3dDebugDrawings::Color::cyan);
-                    //pose error, abort trajectory
-                    std::cout << "Pose is leaving map. Stopping robot." << std::endl;
-                    _motion_command_override.write(haltCommand);
-                    state(TRAJECTORY_ABORTED);
-                }
-            }
-            break;
-        case TRAJECTORY_ABORTED:
-                //keep overriding until someone resets the state
-                _motion_command_override.write(haltCommand);
-            
-            break;
-        case RESETTED:
-      if (! PoseWatchdogBase::configureHook())
+void PoseWatchdog::execRunning()
+{
+    //first call to updateHook() after startHook was executed. We do nothing in here.
+    //this could be used for initialization later on
+    state(WAITING_FOR_DATA);
+}
+
+void PoseWatchdog::execWaitForData()
+{
+    if(gotInitialMap && gotInitialPose && gotInitialTraj)
+    {
+        state(WATCHING);
+        
+        std::cout << "got initial data. state -> WATCHING" << std::endl;
+    }
+    else
+    {
+        //the robot shouldn't move while we wait for data
+        _motion_command_override.write(haltCommand);
+        
+        std::cout << "waiting for data: map: " << gotInitialMap << ", pose: " << gotInitialPose << ", traj: " << gotInitialTraj << std::endl;
+    }
+}
+
+void PoseWatchdog::execWatching()
+{
+    if(checkPose())
+    {
+        //everything is fine, writing nan tells the safety control that we have nothing to complain about
+        _motion_command_override.write(nanCommand);
+    }
+    else
+    {
+        //pose is wrong, trigger safety control
+        _motion_command_override.write(haltCommand);
+        state(TRAJECTORY_ABORTED);
+        
+        std::cout << "Pose error. Stopping robot" << std::endl;
+        DRAW_CYLINDER("watchdog_triggered", pose.position, base::Vector3d(0.03, 0.03, 0.4), vizkit3dDebugDrawings::Color::cyan);
+    }
+}
+
+void PoseWatchdog::execAborted()
+{
+    //keep overriding until someone externally resetst he stateMachine
+    if(resetState)
+    {
+        state(RESETTED);
+        _motion_command_override.write(nanCommand);
+    }
+    else
+    {
+        _motion_command_override.write(haltCommand);
+    }
+}
+
+void PoseWatchdog::execResetted()
+{
+    //FIXME remain here until we have left the obstacle?!
+    state(WATCHING);
+    
+    
+    /*
+           if (! PoseWatchdogBase::configureHook())
             std::cout << "waiting for valid pose" << std::endl;
             //until we get a valid pose we simply belive that everything is fine... HACK
             _motion_command_override.write(nanCommand);//tell safety that we are still alive
             
             if((_robot_pose.readNewest(pose, false) == RTT::NewData) |
-               (_tr_map.readNewest(map, false) == RTT::NewData) |
+//                (_tr_map.readNewest(map, false) == RTT::NewData) |
                (_currentTrajectory.readNewest(currentTrajectory, false)) == RTT::NewData)
             {
                 if(checkPose())
@@ -119,20 +188,16 @@ void PoseWatchdog::updateHook()
                 }
             }
             
-            break;
-        default:
-            std::cout << "default state" << std::endl;
-            break;
-    }
+            */
     
-    
-    _tr_map_out.write(map);
-    
-    PoseWatchdogBase::updateHook();
 }
 
 bool PoseWatchdog::checkPose()
 {
+    //HACK for testing
+    return true;
+    
+    
     //if we are not driving we cannot leave the map
     if(currentTrajectory.empty())
         return true;
@@ -146,14 +211,14 @@ bool PoseWatchdog::checkPose()
             return true;
         case trajectory_follower::TRAJECTORY_KIND_NORMAL:
         {
-            maps::grid::TraversabilityNodeBase* node = map.getData().getClosestNode(pose.position);
+            maps::grid::TraversabilityNodeBase* node;// = map.getData().getClosestNode(pose.position);
             if(node)
             {
                 //subtract distToGround to get from robot frame to map frame
-                const double zDist = fabs(node->getHeight() - (pose.position.z() - _distToGround.get()));
-                if(zDist > _stepHeight.value())
+                const double zDist = fabs(node->getHeight() - (pose.position.z() - _travConfig.value().distToGround));
+                if(zDist > _travConfig.value().maxStepHeight)
                 {
-                    std::cout << "checkPose: node too far away. Distance: " << zDist << ", allowed distance: " << _stepHeight.value()  << std::endl;
+                    std::cout << "checkPose: node too far away. Distance: " << zDist << ", allowed distance: " << _travConfig.value().maxStepHeight  << std::endl;
                     return false;
                 }
                 
@@ -201,8 +266,30 @@ DRAW_CYLINDER("growCheckFail", currNode->getVec3(gridRes), base::Vector3d(0.1, 0
 
 void PoseWatchdog::reset()
 {
-    state(RESETTED);
+    resetState = true;
 }
+
+void PoseWatchdog::updateMap()
+{
+    
+    //FIXME this needlesly copies the map... the interface of the ObstacleMapGenerator3D should be fixed
+    std::shared_ptr<maps::grid::MLSMapKalman> pMap(new maps::grid::MLSMapKalman(map.getData()));
+    obsMapGen->setMLSGrid(pMap);
+    
+    //FIXME use Affine3D for transformation?!
+    const Eigen::Vector3d posInMap(pose.position.x(), pose.position.y(), pose.position.z() -_travConfig.value().distToGround);
+    
+    obsMapGen->expandAll(posInMap, 1.5); //FIXME radius should be parameter
+    
+    //output map for debugging purpose
+    envire::core::SpatioTemporal<maps::grid::TraversabilityBaseMap3d> obsMap;
+    obsMap.data = obsMapGen->getTraversabilityBaseMap(); //FIXME this copies the map 
+    obsMap.frame_id = "ObstacleMap";
+    _obstacle_map.write(obsMap);
+    
+    mapGenerated = true;
+}
+
 
 void PoseWatchdog::errorHook()
 {

@@ -5,6 +5,9 @@
 
 #include "ugv_nav4d/PoseWatchdogBase.hpp"
 #include <trajectory_follower/SubTrajectory.hpp>
+#include <ugv_nav4d/ObstacleMapGenerator3D.hpp>
+#include <functional>
+#include <memory>
 
 namespace ugv_nav4d{
 
@@ -15,16 +18,42 @@ namespace ugv_nav4d{
         
         std::vector<trajectory_follower::SubTrajectory> currentTrajectory;
         base::samples::RigidBodyState pose;
-        envire::core::SpatioTemporal<maps::grid::TraversabilityBaseMap3d> map;
-        base::commands::Motion2D haltCommand;
-        base::commands::Motion2D nanCommand;
-        bool gotMap;
-        bool gotPose;
-        bool gotTraj;
+        envire::core::SpatioTemporal<maps::grid::MLSMapKalman> map;
+        base::commands::Motion2D haltCommand; //this command is send when the robot should be halted
+        base::commands::Motion2D nanCommand; //this command is send when everything is fine
+        
+        //true if new data has been received during this update loop
+        bool gotNewMap;
+        bool gotNewPose;
+        bool gotNewTraj;
+        
+        //true if at least one sample has been received
+        bool gotInitialMap;
+        bool gotInitialPose;
+        bool gotInitialTraj;
+        
+        bool mapGenerated;
+        
+        bool resetState;//signal that internal state should be resetted
+        
+        std::unique_ptr<ObstacleMapGenerator3D> obsMapGen; //is pointer because we need to lazy initialize it
 
-        /* Resets the watchdog after it was triggered
-         */
+        /**contains all execute functions for the internal state machine.
+         * Use States enum as index!*/
+        std::vector<std::function<void(void)>> stateExecutes;
+        
+        /* Resets the watchdog after it was triggered */
         virtual void reset();
+        
+        //internal state machine state execute functions
+        void execRunning();
+        void execWaitForData();
+        void execWatching();
+        void execAborted();
+        void execResetted();
+        
+        void updateMap();
+        
 
     public:
         /** TaskContext constructor for PoseWatchdog
