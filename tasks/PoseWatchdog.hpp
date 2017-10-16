@@ -21,6 +21,8 @@ namespace ugv_nav4d{
         envire::core::SpatioTemporal<maps::grid::MLSMapKalman> map;
         base::commands::Motion2D haltCommand; //this command is send when the robot should be halted
         base::commands::Motion2D nanCommand; //this command is send when everything is fine
+        base::Vector3d lastMapGenPos;//last pose that was used to generate a map
+        double mapGenRadius; //FIXME should be parameter
         
         //true if new data has been received during this update loop
         bool gotNewMap;
@@ -52,7 +54,8 @@ namespace ugv_nav4d{
         void execAborted();
         void execResetted();
         
-        void updateMap();
+        /**Generate the obstacle map in a small radius around @p startPos */
+        void updateMap(const Eigen::Vector3d& startPos);
         
 
     public:

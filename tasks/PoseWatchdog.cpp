@@ -38,6 +38,8 @@ bool PoseWatchdog::configureHook()
     gotNewPose = false;
     gotNewTraj = false;
     
+    mapGenRadius = 1.5;
+    
     haltCommand.heading = base::Angle::fromRad(0);
     haltCommand.translation = 0;
     haltCommand.rotation = 0;
@@ -94,10 +96,12 @@ void PoseWatchdog::updateHook()
     gotInitialTraj |= gotNewTraj;
     gotInitialMap |= gotNewMap;
     
-    if((mapGenerated && gotNewMap) || 
-       (!mapGenerated && gotInitialMap && gotInitialPose))//<< this triggers the first map generation
+    if((mapGenerated && gotNewMap) || //<< this triggers map regeneration if we get a new mls
+       (!mapGenerated && gotInitialMap && gotInitialPose) ||//<< this triggers the first map generation as soon as we got a pose and a map
+       (mapGenerated && gotNewPose && (pose.position.topRows(2) - lastMapGenPos.topRows(2)).norm() >= 0.7 * mapGenRadius))//<<this triggers a regen of the map if we get close to the boarder of the map
     {
-        updateMap();
+        lastMapGenPos = pose.position;
+        updateMap(pose.position);
     }
     
     //execute the internal state machine
@@ -157,6 +161,7 @@ void PoseWatchdog::execAborted()
     if(resetState)
     {
         state(RESETTED);
+        _robot_pose.clear();//clear all old poses that might have accumulated
         _motion_command_override.write(nanCommand);
     }
     else
@@ -168,7 +173,11 @@ void PoseWatchdog::execAborted()
 void PoseWatchdog::execResetted()
 {
     //FIXME remain here until we have left the obstacle?!
-    state(WATCHING);
+    //FIXME clear pose input port and trajectory input port?!
+    
+    //wait here until we got at least one new pose
+    if(gotNewPose)
+        state(WATCHING);
     
     
     /*
@@ -269,7 +278,7 @@ void PoseWatchdog::reset()
     resetState = true;
 }
 
-void PoseWatchdog::updateMap()
+void PoseWatchdog::updateMap(const Eigen::Vector3d& startPos)
 {
     
     //FIXME this needlesly copies the map... the interface of the ObstacleMapGenerator3D should be fixed
@@ -277,9 +286,9 @@ void PoseWatchdog::updateMap()
     obsMapGen->setMLSGrid(pMap);
     
     //FIXME use Affine3D for transformation?!
-    const Eigen::Vector3d posInMap(pose.position.x(), pose.position.y(), pose.position.z() -_travConfig.value().distToGround);
+    const Eigen::Vector3d posInMap(startPos.x(), startPos.y(),startPos.z() -_travConfig.value().distToGround);
     
-    obsMapGen->expandAll(posInMap, 1.5); //FIXME radius should be parameter
+    obsMapGen->expandAll(posInMap, mapGenRadius); //FIXME radius should be parameter
     
     //output map for debugging purpose
     envire::core::SpatioTemporal<maps::grid::TraversabilityBaseMap3d> obsMap;
