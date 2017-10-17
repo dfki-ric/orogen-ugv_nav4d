@@ -4,6 +4,7 @@
 #include <ugv_nav4d/TravGenNode.hpp>
 #include <vizkit3d_debug_drawings/DebugDrawing.h>
 #include <vizkit3d_debug_drawings/DebugDrawingColors.h>
+#include <ugv_nav4d/EnvironmentXYZTheta.hpp>
 
 using namespace ugv_nav4d;
 using namespace trajectory_follower;
@@ -38,7 +39,8 @@ bool PoseWatchdog::configureHook()
     gotNewPose = false;
     gotNewTraj = false;
     
-    mapGenRadius = 1.5;
+    gotPoseAfterReset = false;
+    gotTrajAfterReset = false;
     
     haltCommand.heading = base::Angle::fromRad(0);
     haltCommand.translation = 0;
@@ -65,6 +67,10 @@ bool PoseWatchdog::configureHook()
 
     obsMapGen.reset(new ObstacleMapGenerator3D(_travConfig.get()));
     
+    _currentTrajectory.clear();
+    _map.clear();
+    _currentTrajectory.clear();
+    
     return true;
 }
 bool PoseWatchdog::startHook()
@@ -90,7 +96,7 @@ void PoseWatchdog::updateHook()
         Eigen::Affine3d startPos = pose.getTransform();
         startPos.translate(Eigen::Vector3d(0, 0, - _travConfig.value().distToGround));
         obsMapGen->setInitialPatch(startPos, _initialPatchRadius.value());
-    }
+    } 
     
     gotInitialPose |= gotNewPose;
     gotInitialTraj |= gotNewTraj;
@@ -98,7 +104,7 @@ void PoseWatchdog::updateHook()
     
     if((mapGenerated && gotNewMap) || //<< this triggers map regeneration if we get a new mls
        (!mapGenerated && gotInitialMap && gotInitialPose) ||//<< this triggers the first map generation as soon as we got a pose and a map
-       (mapGenerated && gotNewPose && (pose.position.topRows(2) - lastMapGenPos.topRows(2)).norm() >= 0.7 * mapGenRadius))//<<this triggers a regen of the map if we get close to the boarder of the map
+       (mapGenerated && gotNewPose && (pose.position.topRows(2) - lastMapGenPos.topRows(2)).norm() >= 0.7 * _mapGenerationRadius.value()))//<<this triggers a regen of the map if we get close to the boarder of the map
     {
         lastMapGenPos = pose.position;
         updateMap(pose.position);
@@ -111,12 +117,15 @@ void PoseWatchdog::updateHook()
         throw std::runtime_error("State execute function missing for State: " + state());
     
     PoseWatchdogBase::updateHook();
+    
+    FLUSH_DRAWINGS();
 }
 
 void PoseWatchdog::execRunning()
 {
     //first call to updateHook() after startHook was executed. We do nothing in here.
     //this could be used for initialization later on
+
     state(WAITING_FOR_DATA);
 }
 
@@ -161,52 +170,32 @@ void PoseWatchdog::execAborted()
     if(resetState)
     {
         state(RESETTED);
+        resetState = false;
         _robot_pose.clear();//clear all old poses that might have accumulated
-        _motion_command_override.write(nanCommand);
+        _currentTrajectory.clear(); //clear old trajectories
     }
-    else
-    {
-        _motion_command_override.write(haltCommand);
-    }
+    
+    _motion_command_override.write(haltCommand);
 }
 
 void PoseWatchdog::execResetted()
 {
+    //do not allow the robot to move until we get new data
+    _motion_command_override.write(haltCommand);
+    
     //FIXME remain here until we have left the obstacle?!
-    //FIXME clear pose input port and trajectory input port?!
     
     //wait here until we got at least one new pose
-    if(gotNewPose)
+    gotPoseAfterReset |= gotNewPose;
+    gotTrajAfterReset |= gotNewTraj;
+    
+    if(gotPoseAfterReset && gotTrajAfterReset)
         state(WATCHING);
-    
-    
-    /*
-           if (! PoseWatchdogBase::configureHook())
-            std::cout << "waiting for valid pose" << std::endl;
-            //until we get a valid pose we simply belive that everything is fine... HACK
-            _motion_command_override.write(nanCommand);//tell safety that we are still alive
-            
-            if((_robot_pose.readNewest(pose, false) == RTT::NewData) |
-//                (_tr_map.readNewest(map, false) == RTT::NewData) |
-               (_currentTrajectory.readNewest(currentTrajectory, false)) == RTT::NewData)
-            {
-                if(checkPose())
-                {
-                    std::cout << "got valid pose, WATCHING" << std::endl;
-                    state(WATCHING);
-                }
-            }
-            
-            */
     
 }
 
 bool PoseWatchdog::checkPose()
 {
-    //HACK for testing
-    return true;
-    
-    
     //if we are not driving we cannot leave the map
     if(currentTrajectory.empty())
         return true;
@@ -220,50 +209,12 @@ bool PoseWatchdog::checkPose()
             return true;
         case trajectory_follower::TRAJECTORY_KIND_NORMAL:
         {
-            maps::grid::TraversabilityNodeBase* node;// = map.getData().getClosestNode(pose.position);
-            if(node)
-            {
-                //subtract distToGround to get from robot frame to map frame
-                const double zDist = fabs(node->getHeight() - (pose.position.z() - _travConfig.value().distToGround));
-                if(zDist > _travConfig.value().maxStepHeight)
-                {
-                    std::cout << "checkPose: node too far away. Distance: " << zDist << ", allowed distance: " << _travConfig.value().maxStepHeight  << std::endl;
-                    return false;
-                }
-                
-                
-                std::deque<maps::grid::TraversabilityNodeBase*> nodes;
-                nodes.push_back(node);
-                std::unordered_set<maps::grid::TraversabilityNodeBase*> visited;
-                const double maxDist = 0.1;
-                const double gridRes = map.getData().getResolution().x();
-                while(nodes.size() > 0)
-                {
-                    maps::grid::TraversabilityNodeBase* currNode = nodes.front();
-                    nodes.pop_front();
-                    visited.insert(currNode);
-                    
-                    if(currNode->getType() == maps::grid::TraversabilityNodeBase::TRAVERSABLE)
-                    {
-                        for(maps::grid::TraversabilityNodeBase* neighbor : currNode->getConnections())
-                        {
-                            const double dist = (neighbor->getVec3(gridRes).topRows(2) - node->getVec3(gridRes).topRows(2)).norm();
-                            if(dist <= maxDist && visited.find(neighbor) == visited.end())
-                                nodes.push_back(neighbor);
-                        }
-                    }
-                    else
-                    {
-DRAW_CYLINDER("growCheckFail", currNode->getVec3(gridRes), base::Vector3d(0.1, 0.1, 0.8), vizkit3dDebugDrawings::Color::yellow);
-                        std::cout << "checkPose: node not traversable." << std::endl;
-                        return false;
-                    }
-                    
-                }
-                return true;
-            }
-            std::cout << "checkPose: no node at position" << std::endl;
-            return false;
+            //FIXME use real transform?
+            const base::Vector3d pos(pose.position.x(), pose.position.y(),
+                                     pose.position.z() - _travConfig.value().distToGround);
+            
+            return EnvironmentXYZTheta::obstacleCheck(pos, pose.getYaw(), *obsMapGen,
+                                                      _travConfig.value(), _primConfig.value());
         }
             break;
         default:
@@ -276,6 +227,8 @@ DRAW_CYLINDER("growCheckFail", currNode->getVec3(gridRes), base::Vector3d(0.1, 0
 void PoseWatchdog::reset()
 {
     resetState = true;
+    gotPoseAfterReset = false;
+    gotTrajAfterReset = false;
 }
 
 void PoseWatchdog::updateMap(const Eigen::Vector3d& startPos)
@@ -288,7 +241,7 @@ void PoseWatchdog::updateMap(const Eigen::Vector3d& startPos)
     //FIXME use Affine3D for transformation?!
     const Eigen::Vector3d posInMap(startPos.x(), startPos.y(),startPos.z() -_travConfig.value().distToGround);
     
-    obsMapGen->expandAll(posInMap, mapGenRadius); //FIXME radius should be parameter
+    obsMapGen->expandAll(posInMap, _mapGenerationRadius.value()); //FIXME radius should be parameter
     
     //output map for debugging purpose
     envire::core::SpatioTemporal<maps::grid::TraversabilityBaseMap3d> obsMap;

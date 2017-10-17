@@ -22,7 +22,6 @@ namespace ugv_nav4d{
         base::commands::Motion2D haltCommand; //this command is send when the robot should be halted
         base::commands::Motion2D nanCommand; //this command is send when everything is fine
         base::Vector3d lastMapGenPos;//last pose that was used to generate a map
-        double mapGenRadius; //FIXME should be parameter
         
         //true if new data has been received during this update loop
         bool gotNewMap;
@@ -37,6 +36,9 @@ namespace ugv_nav4d{
         bool mapGenerated;
         
         bool resetState;//signal that internal state should be resetted
+        
+        bool gotPoseAfterReset;
+        bool gotTrajAfterReset;
         
         std::unique_ptr<ObstacleMapGenerator3D> obsMapGen; //is pointer because we need to lazy initialize it
 
@@ -54,8 +56,10 @@ namespace ugv_nav4d{
         void execAborted();
         void execResetted();
         
-        /**Generate the obstacle map in a small radius around @p startPos */
+        /**Generate the obstacle map in a small radius around @p startPos.
+         * @p startPos body frame*/
         void updateMap(const Eigen::Vector3d& startPos);
+        
         
 
     public:
