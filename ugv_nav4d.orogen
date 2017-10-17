@@ -118,8 +118,6 @@ task_context "PoseWatchdog" do
     property "primConfig", "motion_planning_libraries::SplinePrimitivesConfig"
     property "travConfig", "ugv_nav4d::TraversabilityConfig"
     property "initialPatchRadius", "double"
-    property("mapGenerationRadius", "double", 1.5).
-       doc("Size of the local obstacle map around the robot")
             
     # Input ports
     input_port("currentTrajectory", "std::vector<trajectory_follower/SubTrajectory>").

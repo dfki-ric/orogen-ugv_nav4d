@@ -22,6 +22,8 @@ namespace ugv_nav4d{
         base::commands::Motion2D haltCommand; //this command is send when the robot should be halted
         base::commands::Motion2D nanCommand; //this command is send when everything is fine
         base::Vector3d lastMapGenPos;//last pose that was used to generate a map
+        double mapGenerationRadius;
+        double robotHalfLength;
         
         //true if new data has been received during this update loop
         bool gotNewMap;

@@ -28,6 +28,11 @@ bool PoseWatchdog::configureHook()
     if (! PoseWatchdogBase::configureHook())
         return false;
     
+    const double robotLongerLength = std::max(_travConfig.value().robotSizeX, _travConfig.value().robotSizeY);
+    
+    mapGenerationRadius = robotLongerLength * 3.0;
+    robotHalfLength = robotLongerLength / 2.0;
+    
     resetState = false;
     
     mapGenerated = false;
@@ -104,7 +109,7 @@ void PoseWatchdog::updateHook()
     
     if((mapGenerated && gotNewMap) || //<< this triggers map regeneration if we get a new mls
        (!mapGenerated && gotInitialMap && gotInitialPose) ||//<< this triggers the first map generation as soon as we got a pose and a map
-       (mapGenerated && gotNewPose && (pose.position.topRows(2) - lastMapGenPos.topRows(2)).norm() >= 0.7 * _mapGenerationRadius.value()))//<<this triggers a regen of the map if we get close to the boarder of the map
+       (mapGenerated && gotNewPose && (pose.position.topRows(2) - lastMapGenPos.topRows(2)).norm() >= mapGenerationRadius - robotHalfLength - 0.2))//<<this triggers a regen of the map if we get close to the boarder of the map
     {
         lastMapGenPos = pose.position;
         updateMap(pose.position);
@@ -241,7 +246,7 @@ void PoseWatchdog::updateMap(const Eigen::Vector3d& startPos)
     //FIXME use Affine3D for transformation?!
     const Eigen::Vector3d posInMap(startPos.x(), startPos.y(),startPos.z() -_travConfig.value().distToGround);
     
-    obsMapGen->expandAll(posInMap, _mapGenerationRadius.value()); //FIXME radius should be parameter
+    obsMapGen->expandAll(posInMap, mapGenerationRadius); //FIXME radius should be parameter
     
     //output map for debugging purpose
     envire::core::SpatioTemporal<maps::grid::TraversabilityBaseMap3d> obsMap;
