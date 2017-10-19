@@ -57,6 +57,7 @@ namespace ugv_nav4d{
         void execWatching();
         void execAborted();
         void execResetted();
+        void execIgnoring();
         
         /**Generate the obstacle map in a small radius around @p startPos.
          * @p startPos body frame*/

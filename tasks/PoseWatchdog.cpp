@@ -56,7 +56,7 @@ bool PoseWatchdog::configureHook()
     nanCommand.rotation = std::nan("");
     
     
-    stateExecutes.resize(12); //NOTE increase if new states added
+    stateExecutes.resize(13); //NOTE increase if new states added
     stateExecutes[INIT] = nullptr;
     stateExecutes[PRE_OPERATIONAL] = nullptr;
     stateExecutes[FATAL_ERROR] = nullptr;
@@ -69,6 +69,7 @@ bool PoseWatchdog::configureHook()
     stateExecutes[TRAJECTORY_ABORTED] = std::bind(&PoseWatchdog::execAborted, this);
     stateExecutes[WAITING_FOR_DATA] = std::bind(&PoseWatchdog::execWaitForData, this);
     stateExecutes[WATCHING] = std::bind(&PoseWatchdog::execWatching, this);
+    stateExecutes[IGNORING] = std::bind(&PoseWatchdog::execIgnoring, this);
 
     obsMapGen.reset(new ObstacleMapGenerator3D(_travConfig.get()));
     
@@ -115,6 +116,10 @@ void PoseWatchdog::updateHook()
         updateMap(pose.position);
     }
     
+    //enables turn on/off during runtime
+    if(!_abortTrajectory.get())
+        state(IGNORING);
+        
     //execute the internal state machine
     if(stateExecutes[state()] != nullptr)
         stateExecutes[state()]();
@@ -125,6 +130,12 @@ void PoseWatchdog::updateHook()
     
     FLUSH_DRAWINGS();
 }
+
+void PoseWatchdog::execIgnoring()
+{
+     _motion_command_override.write(nanCommand);
+}
+
 
 void PoseWatchdog::execRunning()
 {

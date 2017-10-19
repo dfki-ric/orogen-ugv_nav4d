@@ -118,6 +118,7 @@ task_context "PoseWatchdog" do
     property "primConfig", "motion_planning_libraries::SplinePrimitivesConfig"
     property "travConfig", "ugv_nav4d::TraversabilityConfig"
     property "initialPatchRadius", "double"
+    property "abortTrajectory", "bool", true
             
     # Input ports
     input_port("currentTrajectory", "std::vector<trajectory_follower/SubTrajectory>").
@@ -142,7 +143,7 @@ task_context "PoseWatchdog" do
         
     runtime_states :WATCHING, :TRAJECTORY_ABORTED, :WAITING_FOR_DATA, :RESETTED
 
-    error_states :ERROR
+    error_states :ERROR, :IGNORING
 
     needs_configuration
     port_driven
