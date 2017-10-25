@@ -150,4 +150,7 @@ task_context "PoseWatchdog" do
 
 end
 
+typekit do
+    export_types 'ugv_nav4d/Motion'
+end
 
