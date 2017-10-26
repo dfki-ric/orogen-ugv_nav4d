@@ -1,6 +1,7 @@
 /* Generated from orogen/lib/orogen/templates/tasks/Task.cpp */
 
 #include "PathPlanner.hpp"
+#include "ugv_nav4dTypes.hpp"
 #include <ugv_nav4d/Planner.hpp>
 #include <envire_core/items/SpatioTemporal.hpp>
 #include <vizkit3d_debug_drawings/DebugDrawing.h>
@@ -129,11 +130,17 @@ void PathPlanner::updateHook()
         
         writeTravMap();
                
+        TrajWMotions trajWMotions;
+        
         switch(res)
         {
             case Planner::FOUND_SOLUTION:
                 _trajectory.write(trajectory);
-                _motionPrims.write(planner->getMotions());
+                
+                // combined here to allow easier synchronisation of both objects in other modules
+                trajWMotions.trajectories = trajectory;
+                trajWMotions.motions = planner->getMotions();
+                _traj_with_motions.write(trajWMotions);
                 setIfNotSet(FOUND_SOLUTION);
                 break;
             
