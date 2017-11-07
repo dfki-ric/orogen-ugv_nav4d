@@ -25,21 +25,6 @@ AreaExploration::~AreaExploration()
 
 void AreaExploration::calculateGoals(::ugv_nav4d::OrientedBoxConfig const & area)
 {
-    
-    std::cout << "CALC GOALS" << std::endl;
-    
-    if(!mapValid)
-    {
-        state(NO_MAP);
-        return;
-    }
-
-    if(!poseValid)
-    {
-        state(ugv_nav4d::AreaExplorationBase::NO_POSE);
-        return;
-    }
-    
     generateFrontiers = true;
     this->area = area;
 }
@@ -106,8 +91,6 @@ void AreaExploration::updateHook()
         }
         poseValid = true;
         
-        std::cout << "POSE VALID SET" << std::endl;
-        
         if(coverage && mapValid && (curPose.position - previousPose.position).norm() > _coverageUpdateDistance.get())
         {
             std::cout << "Adding coverage at " << curPose.position.transpose() << '\n';
@@ -118,7 +101,15 @@ void AreaExploration::updateHook()
         }
     }
     
-    if(generateFrontiers)
+    if(!poseValid)
+    {
+        state(ugv_nav4d::AreaExplorationBase::NO_POSE);
+    }
+    else if(!mapValid)
+    {
+        state(ugv_nav4d::AreaExplorationBase::NO_MAP);
+    }
+    else if(generateFrontiers)
     {
         state(PLANNING);
         
@@ -149,7 +140,7 @@ void AreaExploration::updateHook()
         
         generateFrontiers = false;
         
-    FLUSH_DRAWINGS();
+        FLUSH_DRAWINGS();
     }
 }
 void AreaExploration::errorHook()
