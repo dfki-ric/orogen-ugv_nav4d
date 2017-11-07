@@ -25,6 +25,9 @@ AreaExploration::~AreaExploration()
 
 void AreaExploration::calculateGoals(::ugv_nav4d::OrientedBoxConfig const & area)
 {
+    
+    std::cout << "CALC GOALS" << std::endl;
+    
     if(!mapValid)
     {
         state(NO_MAP);
@@ -102,6 +105,9 @@ void AreaExploration::updateHook()
             previousPose = curPose;
         }
         poseValid = true;
+        
+        std::cout << "POSE VALID SET" << std::endl;
+        
         if(coverage && mapValid && (curPose.position - previousPose.position).norm() > _coverageUpdateDistance.get())
         {
             std::cout << "Adding coverage at " << curPose.position.transpose() << '\n';
@@ -131,17 +137,7 @@ void AreaExploration::updateHook()
         }
         else
         {
-            //FIXME just for testing
-            state(GOALS_GENERATED);
-
-            for(auto &f : outFrontiers)
-            {
-                //convert to ground frame
-                f.position +=  f.orientation * Eigen::Vector3d(0,0, -_travConfig.get().distToGround);
-            }
-            
-            _goals_out.write(outFrontiers);
-//             state(AREA_EXPLORED);
+             state(AREA_EXPLORED);
         }
         
         {
