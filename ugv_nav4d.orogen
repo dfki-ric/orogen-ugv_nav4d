@@ -64,6 +64,7 @@ task_context "PathPlanner" do
         :START_INVALID,
         :INTERNAL_ERROR,
         :PLANNING,
+        :TRAVERSABILITY_MAP_GENERATED,
         :NO_SOLUTION,
         :FOUND_SOLUTION
 

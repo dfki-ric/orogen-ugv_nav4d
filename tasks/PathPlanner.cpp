@@ -34,8 +34,9 @@ void PathPlanner::writeTravMap()
     envire::core::SpatioTemporal<maps::grid::TraversabilityBaseMap3d> strmap;
     strmap.data = planner->getTraversabilityMap();
     strmap.frame_id = "Traversability";
-    
     _tr_map.write(strmap);
+    
+    state(ugv_nav4d::PathPlannerBase::TRAVERSABILITY_MAP_GENERATED);
 }
 
 
