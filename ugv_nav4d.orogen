@@ -53,6 +53,11 @@ task_context "PathPlanner" do
         returns("int").
         doc("Triggers planning of a new path")
 
+    operation("triggerTravMap").
+        arg("start_position", "base/samples/RigidBodyState").
+        returns("int").
+        doc("Triggers generation of traversability map")
+
     
     runtime_states :NO_MAP,
         :GOAL_INVALID,

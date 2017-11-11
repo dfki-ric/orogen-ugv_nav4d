@@ -58,6 +58,18 @@ int32_t PathPlanner::triggerPathPlanning(const base::samples::RigidBodyState& st
     return 1;
 }
 
+int32_t PathPlanner::triggerTravMap(const base::samples::RigidBodyState& start_position)
+{
+    if(!gotMap)
+        return 0;
+
+    start_pose = start_position;
+
+    genTravMap = true;
+    
+    return 1;
+}
+
 /// The following lines are template definitions for the various state machine
 // hooks defined by Orocos::RTT. See PathPlanner.hpp for more detailed
 // documentation about them.
@@ -90,6 +102,7 @@ bool PathPlanner::startHook()
     
     initalPatchAdded = false;
     executePlanning = false;
+    genTravMap = false;
     gotMap = false;
     return true;
 }
@@ -109,7 +122,17 @@ void PathPlanner::updateHook()
         gotMap = true;
         planner->updateMap(map.getData());
     } 
-    
+
+    if(genTravMap)
+    {
+        genTravMap = false;
+        
+        //we would expand anyway if we plan...
+        if(!executePlanning)            
+        {
+            planner->genTravMap(start_pose);
+        }
+    }
     
     if(executePlanning)
     {

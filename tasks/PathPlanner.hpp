@@ -30,6 +30,7 @@ namespace ugv_nav4d{
         std::unique_ptr<Planner> planner;
         bool initalPatchAdded;
         bool executePlanning;
+        bool genTravMap;
         bool gotMap;
         base::samples::RigidBodyState start_pose;
         base::samples::RigidBodyState stop_pose;
@@ -38,6 +39,9 @@ namespace ugv_nav4d{
         void setIfNotSet(const PathPlannerBase::States &newState);
 
         virtual boost::int32_t triggerPathPlanning(::base::samples::RigidBodyState const & start_position, ::base::samples::RigidBodyState const & goal_position);
+        /* Triggers generation of traversability map
+         */
+        virtual boost::int32_t triggerTravMap(::base::samples::RigidBodyState const & start_position);
 
     public:
         /** TaskContext constructor for PathPlanner
