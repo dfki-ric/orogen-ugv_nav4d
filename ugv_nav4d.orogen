@@ -38,6 +38,7 @@ task_context "PathPlanner" do
     
     input_port "map", spatio_temporal('/maps/grid/MLSMapKalman')
     output_port "trajectory", "std::vector<trajectory_follower/SubTrajectory>"
+    output_port "beautified_trajectory", "std::vector<trajectory_follower/SubTrajectory>"
 
     output_port "tr_map", spatio_temporal('/maps/grid/TraversabilityBaseMap3d')
     output_port "debugDrawings", "/boost/shared_ptr</vizkit3dDebugDrawings/CommandBuffer>"

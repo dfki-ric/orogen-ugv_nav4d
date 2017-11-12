@@ -153,11 +153,12 @@ void PathPlanner::updateHook()
         
         setIfNotSet(PLANNING);
         std::vector<trajectory_follower::SubTrajectory> trajectory;
+        std::vector<trajectory_follower::SubTrajectory> beautifiedTrajectory;
         
         CLEAR_DRAWING("planner_goal");
         DRAW_AXES("planner_goal", stop_pose.position, stop_pose.orientation);
         
-        Planner::PLANNING_RESULT res = planner->plan(_maxTime.value(), start_pose, stop_pose, trajectory, _dumpOnError.get());
+        Planner::PLANNING_RESULT res = planner->plan(_maxTime.value(), start_pose, stop_pose, trajectory, beautifiedTrajectory, _dumpOnError.get());
         
         writeTravMap();
                
@@ -167,7 +168,7 @@ void PathPlanner::updateHook()
         {
             case Planner::FOUND_SOLUTION:
                 _trajectory.write(trajectory);
-                
+                _beautified_trajectory.write(beautifiedTrajectory);
                 // combined here to allow easier synchronisation of both objects in other modules
                 trajWMotions.trajectories = trajectory;
                 trajWMotions.motions = planner->getMotions();
