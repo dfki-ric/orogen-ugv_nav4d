@@ -128,6 +128,13 @@ void PathPlanner::updateHook()
     {
         genTravMap = false;
         
+        if(!initalPatchAdded)
+        {
+            std::cout << "ADDING INITIAL PATCH TASK" << std::endl;
+            planner->setInitialPatch(start_pose.getTransform(), _initialPatchRadius.get());
+            initalPatchAdded = true;
+        }
+        
         //we would expand anyway if we plan...
         if(!executePlanning)            
         {
