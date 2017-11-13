@@ -257,7 +257,16 @@ void PoseWatchdog::updateMap(const Eigen::Vector3d& startPos)
     //FIXME use Affine3D for transformation?!
     const Eigen::Vector3d posInMap(startPos.x(), startPos.y(),startPos.z() -_travConfig.value().distToGround);
     
-    obsMapGen->expandAll(posInMap, mapGenerationRadius); //FIXME radius should be parameter
+    //HACK expand everything all the time. This is a hack for a demo, should not remain here once the demo is done
+    oldStartPoses.push_back(posInMap);
+    for(int i = oldStartPoses.size() - 1; i >= 0; --i)
+    {
+        obsMapGen->expandAll(oldStartPoses[i]);
+    }
+    
+    
+    //use this instead of the hack
+//     obsMapGen->expandAll(posInMap, mapGenerationRadius); //FIXME radius should be parameter
     
     //output map for debugging purpose
     envire::core::SpatioTemporal<maps::grid::TraversabilityBaseMap3d> obsMap;

@@ -24,6 +24,7 @@ namespace ugv_nav4d{
         base::Vector3d lastMapGenPos;//last pose that was used to generate a map
         double mapGenerationRadius;
         double robotHalfLength;
+        std::vector<Eigen::Vector3d> oldStartPoses;//map is expanded from all old start poses to be more robust
         
         //true if new data has been received during this update loop
         bool gotNewMap;
