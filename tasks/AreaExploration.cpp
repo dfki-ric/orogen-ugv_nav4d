@@ -132,10 +132,10 @@ void AreaExploration::updateHook()
         }
         
         {
-            envire::core::SpatioTemporal<maps::grid::TraversabilityBaseMap3d> trMap;
-            trMap.frame_id = "AreaExploration";
-            trMap.data = frontGen->getTraversabilityBaseMap();
-            _tr_map.write(trMap);
+//             envire::core::SpatioTemporal<maps::grid::TraversabilityBaseMap3d> trMap;
+//             trMap.frame_id = "AreaExploration";
+//             trMap.data = frontGen->getTraversabilityBaseMap();
+//             _tr_map.write(trMap);
         }
         
         generateFrontiers = false;

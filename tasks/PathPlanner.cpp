@@ -31,8 +31,17 @@ void PathPlanner::setIfNotSet(const PathPlannerBase::States& newState)
 
 void PathPlanner::writeTravMap()
 {
+    //SUPER HACK to create a deep copy of the map
+    std::stringstream stream;
+    boost::archive::binary_oarchive oa(stream);
+    oa << planner->getTraversabilityMap();
+
     envire::core::SpatioTemporal<maps::grid::TraversabilityBaseMap3d> strmap;
-    strmap.data = planner->getTraversabilityMap();
+
+    // deserialize from string stream
+    boost::archive::binary_iarchive ia(stream);
+    ia >> strmap.data;
+
     strmap.frame_id = "Traversability";
     _tr_map.write(strmap);
     
