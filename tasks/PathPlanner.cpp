@@ -7,6 +7,9 @@
 #include <vizkit3d_debug_drawings/DebugDrawing.h>
 #include <trajectory_follower/SubTrajectory.hpp>
 
+#include <boost/archive/binary_iarchive.hpp>
+#include <boost/archive/binary_oarchive.hpp>
+
 using namespace ugv_nav4d;
 
 PathPlanner::PathPlanner(std::string const& name)
@@ -31,12 +34,12 @@ void PathPlanner::setIfNotSet(const PathPlannerBase::States& newState)
 
 void PathPlanner::writeTravMap()
 {
+    envire::core::SpatioTemporal<maps::grid::TraversabilityBaseMap3d> strmap;
     //SUPER HACK to create a deep copy of the map
     std::stringstream stream;
     boost::archive::binary_oarchive oa(stream);
-    oa << planner->getTraversabilityMap();
-
-    envire::core::SpatioTemporal<maps::grid::TraversabilityBaseMap3d> strmap;
+    strmap.data = planner->getTraversabilityMap();
+    oa << strmap.data;
 
     // deserialize from string stream
     boost::archive::binary_iarchive ia(stream);
