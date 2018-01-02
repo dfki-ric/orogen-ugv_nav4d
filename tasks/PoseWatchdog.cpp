@@ -269,10 +269,10 @@ void PoseWatchdog::updateMap(const Eigen::Vector3d& startPos)
 //     obsMapGen->expandAll(posInMap, mapGenerationRadius); //FIXME radius should be parameter
     
     //output map for debugging purpose
-//     envire::core::SpatioTemporal<maps::grid::TraversabilityBaseMap3d> obsMap;
-//     obsMap.data = obsMapGen->getTraversabilityBaseMap(); //FIXME this copies the map 
-//     obsMap.frame_id = "ObstacleMap";
-//     _obstacle_map.write(obsMap);
+    envire::core::SpatioTemporal<maps::grid::TraversabilityBaseMap3d> obsMap;
+    obsMap.data = obsMapGen->getTraversabilityMap().copyCast<maps::grid::TraversabilityNodeBase *>();
+    obsMap.frame_id = "ObstacleMap";
+    _obstacle_map.write(obsMap);
     
     mapGenerated = true;
 }
