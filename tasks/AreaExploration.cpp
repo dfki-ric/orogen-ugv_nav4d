@@ -79,7 +79,7 @@ void AreaExploration::updateHook()
         mapValid = true;
         frontGen->updateMap(map.data, coverage ? &coverage->getCoverage() : nullptr);
         if(coverage)
-            coverage->setFrame(frontGen->getTraversabilityBaseMap());
+            coverage->setFrame(frontGen->getTraversabilityMap());
     }
 
     if(_pose_samples.readNewest(curPose, false) == RTT::NewData)
