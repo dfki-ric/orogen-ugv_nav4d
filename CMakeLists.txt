@@ -8,3 +8,5 @@ INCLUDE(ugv_nav4dBase)
 # FIND_PACKAGE(KDL)
 # FIND_PACKAGE(OCL)
 
+
+add_subdirectory(init)
