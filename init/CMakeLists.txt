@@ -8,6 +8,6 @@ if(LIB_INIT_FOUND)
             UGVAreaExploration.hpp
             UGVNav4d.hpp
         DEPS_PKGCONFIG
-            envire_maps-init
+#            envire_maps-init
     )
 endif()
