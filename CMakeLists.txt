@@ -9,4 +9,5 @@ INCLUDE(ugv_nav4dBase)
 # FIND_PACKAGE(OCL)
 
 
-add_subdirectory(init)
+#disabled due to circular dependency with lib_init_optional
+#add_subdirectory(init)
