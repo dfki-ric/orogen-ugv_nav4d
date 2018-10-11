@@ -14,8 +14,7 @@ import_types_from "ugv_nav4d/OrientedBox.hpp"
 import_types_from "ugv_nav4d/DiscreteTheta.hpp"
 import_types_from "ugv_nav4d/PreComputedMotions.hpp"
 
-import_types_from "motion_planning_libraries/sbpl/SplinePrimitivesConfig.hpp"
-import_types_from "motion_planning_libraries/Config.hpp"
+import_types_from "sbpl_spline_primitives/SplinePrimitivesConfig.hpp"
 
 import_types_from "trajectory_follower/SubTrajectory.hpp"
 import_types_from "vizkit3d_debug_drawings"
@@ -30,9 +29,9 @@ task_context "PathPlanner" do
     needs_configuration
 
     property "maxTime", "base::Time"
-    property "primConfig", "motion_planning_libraries::SplinePrimitivesConfig"
+    property "primConfig", "sbpl_spline_primitives::SplinePrimitivesConfig"
     property "travConfig", "ugv_nav4d::TraversabilityConfig"
-    property "mobilityConfig", "motion_planning_libraries::Mobility"
+    property "mobilityConfig", "ugv_nav4d::Mobility"
     property("initialPatchRadius","double", 0.0)
     property("dumpOnError","int", 0)
     
@@ -122,7 +121,7 @@ end
 
 task_context "PoseWatchdog" do
     
-    property "primConfig", "motion_planning_libraries::SplinePrimitivesConfig"
+    property "primConfig", "sbpl_spline_primitives::SplinePrimitivesConfig"
     property "travConfig", "ugv_nav4d::TraversabilityConfig"
     property "initialPatchRadius", "double"
     property "abortTrajectory", "bool", true
