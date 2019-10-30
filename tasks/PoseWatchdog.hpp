@@ -4,7 +4,7 @@
 #define UGV_NAV4D_POSEWATCHDOG_TASK_HPP
 
 #include "ugv_nav4d/PoseWatchdogBase.hpp"
-#include <trajectory_follower/SubTrajectory.hpp>
+#include <base/Trajectory.hpp>
 #include <ugv_nav4d/ObstacleMapGenerator3D.hpp>
 #include <functional>
 #include <memory>
@@ -16,7 +16,7 @@ namespace ugv_nav4d{
     friend class PoseWatchdogBase;
     protected:
         
-        std::vector<trajectory_follower::SubTrajectory> currentTrajectory;
+        std::vector<base::Trajectory> currentTrajectory;
         base::samples::RigidBodyState pose;
         envire::core::SpatioTemporal<maps::grid::MLSMapKalman> map;
         base::commands::Motion2D haltCommand; //this command is send when the robot should be halted
