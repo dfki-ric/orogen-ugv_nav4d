@@ -2,11 +2,12 @@
 #include <base-logging/Logging.hpp>
 #include <maps/grid/TraversabilityMap3d.hpp>
 #include <ugv_nav4d/TravGenNode.hpp>
-#include <vizkit3d_debug_drawings/DebugDrawing.hpp>
-#include <vizkit3d_debug_drawings/DebugDrawingColors.hpp>
+#include <vizkit3d_debug_drawings/DebugDrawing.h>
+#include <vizkit3d_debug_drawings/DebugDrawingColors.h>
 #include <ugv_nav4d/EnvironmentXYZTheta.hpp>
 
 using namespace ugv_nav4d;
+using namespace trajectory_follower;
 
 PoseWatchdog::PoseWatchdog(std::string const& name)
     : PoseWatchdogBase(name)
@@ -86,6 +87,7 @@ bool PoseWatchdog::startHook()
 }
 void PoseWatchdog::updateHook()
 {
+    CONFIGURE_DEBUG_DRAWINGS_USE_PORT_NO_THROW(this);
     
     //FIXME why is currentTrajectory a vector? Shouldn't it be just one SubTrajectory?
     
@@ -126,7 +128,7 @@ void PoseWatchdog::updateHook()
     
     PoseWatchdogBase::updateHook();
     
-    V3DD::FLUSH_DRAWINGS();
+    FLUSH_DRAWINGS();
 }
 
 void PoseWatchdog::execIgnoring()
@@ -174,7 +176,7 @@ void PoseWatchdog::execWatching()
         state(TRAJECTORY_ABORTED);
         
         std::cout << "Pose error. Stopping robot" << std::endl;
-        V3DD::DRAW_CYLINDER("watchdog_triggered", pose.position, base::Vector3d(0.03, 0.03, 0.4), V3DD::Color::cyan);
+        DRAW_CYLINDER("watchdog_triggered", pose.position, base::Vector3d(0.03, 0.03, 0.4), vizkit3dDebugDrawings::Color::cyan);
     }
 }
 
@@ -210,31 +212,31 @@ void PoseWatchdog::execResetted()
 
 bool PoseWatchdog::checkPose()
 {
-//     //if we are not driving we cannot leave the map
-//     if(currentTrajectory.empty())
-//         return true;
-//     
-//     //FIXME this assumes that the kind is the same for all SubTrajectories in the vector.
-//     switch(currentTrajectory.front().kind)
-//     {
-//         //while rescuing from an unstable/unsafe position leaving the map is ok.
-//         case trajectory_follower::TRAJECTORY_KIND_RESCUE:
-//             std::cout << "ignoring rescue trajectory" << std::endl;
-//             return true;
-//         case trajectory_follower::TRAJECTORY_KIND_NORMAL:
-//         {
-//             //FIXME use real transform?
-//             const base::Vector3d pos(pose.position.x(), pose.position.y(),
-//                                      pose.position.z() - _travConfig.value().distToGround);
-//             
-//             return EnvironmentXYZTheta::obstacleCheck(pos, pose.getYaw(), *obsMapGen,
-//                                                       _travConfig.value(), _primConfig.value());
-//         }
-//             break;
-//         default:
-//             throw std::runtime_error("unknown trajectory kind: " + currentTrajectory.front().kind);
-//     }
-//     std::cout << "checkPose failed" << std::endl;
+    //if we are not driving we cannot leave the map
+    if(currentTrajectory.empty())
+        return true;
+    
+    //FIXME this assumes that the kind is the same for all SubTrajectories in the vector.
+    switch(currentTrajectory.front().kind)
+    {
+        //while rescuing from an unstable/unsafe position leaving the map is ok.
+        case trajectory_follower::TRAJECTORY_KIND_RESCUE:
+            std::cout << "ignoring rescue trajectory" << std::endl;
+            return true;
+        case trajectory_follower::TRAJECTORY_KIND_NORMAL:
+        {
+            //FIXME use real transform?
+            const base::Vector3d pos(pose.position.x(), pose.position.y(),
+                                     pose.position.z() - _travConfig.value().distToGround);
+            
+            return EnvironmentXYZTheta::obstacleCheck(pos, pose.getYaw(), *obsMapGen,
+                                                      _travConfig.value(), _primConfig.value());
+        }
+            break;
+        default:
+            throw std::runtime_error("unknown trajectory kind: " + currentTrajectory.front().kind);
+    }
+    std::cout << "checkPose failed" << std::endl;
     return false;
 }
 
@@ -270,7 +272,7 @@ void PoseWatchdog::updateMap(const Eigen::Vector3d& startPos)
     envire::core::SpatioTemporal<maps::grid::TraversabilityBaseMap3d> obsMap;
     obsMap.data = obsMapGen->getTraversabilityMap().copyCast<maps::grid::TraversabilityNodeBase *>();
     obsMap.frame_id = "ObstacleMap";
-//     _obstacle_map.write(obsMap);
+    _obstacle_map.write(obsMap);
     
     mapGenerated = true;
 }

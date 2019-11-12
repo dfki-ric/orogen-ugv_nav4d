@@ -16,6 +16,7 @@ import_types_from "ugv_nav4d/PreComputedMotions.hpp"
 
 import_types_from "sbpl_spline_primitives/SplinePrimitivesConfig.hpp"
 
+import_types_from "trajectory_follower/SubTrajectory.hpp"
 import_types_from "vizkit3d_debug_drawings"
 
 using_library "ugv_nav4d"
@@ -35,10 +36,10 @@ task_context "PathPlanner" do
     property("dumpOnError","int", 0)
     
     input_port "map", spatio_temporal('/maps/grid/MLSMapKalman')
-    output_port "trajectory", "std::vector<base/Trajectory>"
-    output_port "beautified_trajectory", "std::vector<base/Trajectory>"
+    output_port "trajectory", "std::vector<trajectory_follower/SubTrajectory>"
+    output_port "beautified_trajectory", "std::vector<trajectory_follower/SubTrajectory>"
 
-#    output_port "tr_map", spatio_temporal('/maps/grid/TraversabilityBaseMap3d')
+    output_port "tr_map", spatio_temporal('/maps/grid/TraversabilityBaseMap3d')
     output_port "debugDrawings", "/boost/shared_ptr</vizkit3dDebugDrawings/CommandBuffer>"
 
     output_port "traj_with_motions", "ugv_nav4d/TrajWMotions"
@@ -94,7 +95,7 @@ task_context "AreaExploration" do
         doc("Just the first (best) goal of the goal_out list.")
         
     output_port "debugDrawings", "/boost/shared_ptr</vizkit3dDebugDrawings/CommandBuffer>"
-#    output_port "tr_map", spatio_temporal('/maps/grid/TraversabilityBaseMap3d')
+    output_port "tr_map", spatio_temporal('/maps/grid/TraversabilityBaseMap3d')
 
     output_port "coverage", "/maps/grid/MLSMapBase"
 
@@ -126,7 +127,7 @@ task_context "PoseWatchdog" do
     property "abortTrajectory", "bool", true
             
     # Input ports
-    input_port("currentTrajectory", "std::vector<base/Trajectory>").
+    input_port("currentTrajectory", "std::vector<trajectory_follower/SubTrajectory>").
         doc("the part of the trajectory the robot is currently following").
         needs_buffered_connection
 
@@ -136,8 +137,8 @@ task_context "PoseWatchdog" do
     input_port("map", spatio_temporal('/maps/grid/MLSMapKalman')).
         doc "Map the robot is driving on"
         
- #   output_port("obstacle_map", spatio_temporal('/maps/grid/TraversabilityBaseMap3d')).
- #       doc "Obstacle map generated from the mls map"
+    output_port("obstacle_map", spatio_temporal('/maps/grid/TraversabilityBaseMap3d')).
+        doc "Obstacle map generated from the mls map"
 
     output_port("motion_command_override", "base/commands/Motion2D").
         doc "This motion command is published whenever the watchdog wants to stop the robot from moving"

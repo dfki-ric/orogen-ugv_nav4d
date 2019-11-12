@@ -4,7 +4,7 @@
 #include "ugv_nav4dTypes.hpp"
 #include <ugv_nav4d/Planner.hpp>
 #include <envire_core/items/SpatioTemporal.hpp>
-#include <vizkit3d_debug_drawings/DebugDrawing.hpp>
+#include <vizkit3d_debug_drawings/DebugDrawing.h>
 #include <trajectory_follower/SubTrajectory.hpp>
 
 #include <boost/archive/binary_iarchive.hpp>
@@ -37,7 +37,7 @@ void PathPlanner::writeTravMap()
     envire::core::SpatioTemporal<maps::grid::TraversabilityBaseMap3d> strmap;
     strmap.data = planner->getTraversabilityMap().copyCast<maps::grid::TraversabilityNodeBase *>();
     strmap.frame_id = "Traversability";
-//     _tr_map.write(strmap);
+    _tr_map.write(strmap);
     
     state(ugv_nav4d::PathPlannerBase::TRAVERSABILITY_MAP_GENERATED);
 }
@@ -74,30 +74,25 @@ int32_t PathPlanner::triggerTravMap(const base::samples::RigidBodyState& start_p
     return 1;
 }
 
+/// The following lines are template definitions for the various state machine
+// hooks defined by Orocos::RTT. See PathPlanner.hpp for more detailed
+// documentation about them.
 
 bool PathPlanner::configureHook()
 {
-    std::vector<std::string> channels = V3DD::GET_DECLARED_CHANNELS();
-    std::vector<std::string> channels_filtered;
-    for(const std::string& channel : channels)
-    {
-        //check if starts with 
-        if (channel.rfind("ugv_nav4d", 0) == 0)
-            channels_filtered.push_back(channel);
-    }
-    V3DD::CONFIGURE_DEBUG_DRAWINGS_USE_PORT(this, channels_filtered);
+    CONFIGURE_DEBUG_DRAWINGS_USE_PORT_NO_THROW(this);
 
     planner.reset(new Planner(_primConfig.get(), _travConfig.get(), _mobilityConfig.get()));
     
     planner->setTravMapCallback([&] () 
     {
         writeTravMap();
-        V3DD::FLUSH_DRAWINGS();
+        FLUSH_DRAWINGS();
     });
     
 
     
-    V3DD::FLUSH_DRAWINGS();
+    FLUSH_DRAWINGS();
     
     if (! PathPlannerBase::configureHook())
         return false;
@@ -117,6 +112,7 @@ bool PathPlanner::startHook()
 }
 void PathPlanner::updateHook()
 {
+    CONFIGURE_DEBUG_DRAWINGS_USE_PORT_NO_THROW(this);
     
     envire::core::SpatioTemporal<maps::grid::MLSMapKalman> map;
     auto map_status = _map.readNewest(map, false);
@@ -159,9 +155,11 @@ void PathPlanner::updateHook()
         }
         
         setIfNotSet(PLANNING);
-        std::vector<base::Trajectory> trajectory;
-        std::vector<base::Trajectory> beautifiedTrajectory;
+        std::vector<trajectory_follower::SubTrajectory> trajectory;
+        std::vector<trajectory_follower::SubTrajectory> beautifiedTrajectory;
         
+        CLEAR_DRAWING("planner_goal");
+        DRAW_AXES("planner_goal", stop_pose.position, stop_pose.orientation);
         
         Planner::PLANNING_RESULT res = planner->plan(_maxTime.value(), start_pose, stop_pose, trajectory, beautifiedTrajectory, _dumpOnError.get());
         
@@ -202,7 +200,7 @@ void PathPlanner::updateHook()
     }
     
     PathPlannerBase::updateHook();
-    V3DD::FLUSH_DRAWINGS();
+    FLUSH_DRAWINGS();
 }
 void PathPlanner::errorHook()
 {

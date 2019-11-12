@@ -3,9 +3,9 @@
 #include "AreaExploration.hpp"
 #include <ugv_nav4d/AreaExplorer.hpp>
 #include <ugv_nav4d/FrontierGenerator.hpp>
-#include <vizkit3d_debug_drawings/DebugDrawing.hpp>
+#include <vizkit3d_debug_drawings/DebugDrawing.h>
 
-//#include <maps/operations/CoverageMapGeneration.hpp>
+#include <maps/operations/CoverageMapGeneration.hpp>
 
 using namespace ugv_nav4d;
 
@@ -40,26 +40,18 @@ void AreaExploration::clearPlannerMap()
 
 bool AreaExploration::configureHook()
 {
-    std::vector<std::string> channels = V3DD::GET_DECLARED_CHANNELS();
-    std::vector<std::string> channels_filtered;
-    for(const std::string& channel : channels)
-    {
-        //check if starts with 
-        if (channel.rfind("ugv_nav4d", 0) == 0)
-            channels_filtered.push_back(channel);
-    }
-    V3DD::CONFIGURE_DEBUG_DRAWINGS_USE_PORT(this, channels_filtered);
+    CONFIGURE_DEBUG_DRAWINGS_USE_PORT_NO_THROW(this);
 
     frontGen = std::make_shared<FrontierGenerator>(_travConfig.get(), _costConfig.get());
     explorer = std::make_shared<AreaExplorer>(frontGen);
 
-//     if(_coverageRadius.get() > 0)
-//     {
-//         coverage = std::make_shared<maps::operations::CoverageTracker>();
-//     }
-//     else coverage.reset();
+    if(_coverageRadius.get() > 0)
+    {
+        coverage = std::make_shared<maps::operations::CoverageTracker>();
+    }
+    else coverage.reset();
 
-//     FLUSH_DRAWINGS();
+    FLUSH_DRAWINGS();
     
     if (! AreaExplorationBase::configureHook())
         return false;
@@ -78,16 +70,16 @@ bool AreaExploration::startHook()
 }
 void AreaExploration::updateHook()
 {
-//     CONFIGURE_DEBUG_DRAWINGS_USE_PORT_NO_THROW(this);
+    CONFIGURE_DEBUG_DRAWINGS_USE_PORT_NO_THROW(this);
     
     AreaExplorationBase::updateHook();
 
     if(_map.readNewest(map, false) == RTT::NewData)
     {
         mapValid = true;
-//         frontGen->updateMap(map.data, coverage ? &coverage->getCoverage() : nullptr);
-//         if(coverage)
-//             coverage->setFrame(frontGen->getTraversabilityMap());
+        frontGen->updateMap(map.data, coverage ? &coverage->getCoverage() : nullptr);
+        if(coverage)
+            coverage->setFrame(frontGen->getTraversabilityMap());
     }
 
     if(_pose_samples.readNewest(curPose, false) == RTT::NewData)
@@ -99,14 +91,14 @@ void AreaExploration::updateHook()
         }
         poseValid = true;
         
-//         if(coverage && mapValid && (curPose.position - previousPose.position).norm() > _coverageUpdateDistance.get())
-//         {
-//             std::cout << "Adding coverage at " << curPose.position.transpose() << '\n';
+        if(coverage && mapValid && (curPose.position - previousPose.position).norm() > _coverageUpdateDistance.get())
+        {
+            std::cout << "Adding coverage at " << curPose.position.transpose() << '\n';
             // TODO AngleSegment and orientation are ignored at the moment
-//             coverage->addCoverage(_coverageRadius.get(), base::AngleSegment{}, curPose.getPose());
-//             _coverage.write(coverage->getCoverage());
+            coverage->addCoverage(_coverageRadius.get(), base::AngleSegment{}, curPose.getPose());
+            _coverage.write(coverage->getCoverage());
             previousPose = curPose;
-//         }
+        }
     }
     
     if(!poseValid)
@@ -143,12 +135,12 @@ void AreaExploration::updateHook()
             envire::core::SpatioTemporal<maps::grid::TraversabilityBaseMap3d> trMap;
             trMap.frame_id = "AreaExploration";
             trMap.data = frontGen->getTraversabilityMap().copyCast<maps::grid::TraversabilityNodeBase *>();
-//             _tr_map.write(trMap);
+            _tr_map.write(trMap);
         }
         
         generateFrontiers = false;
         
-        V3DD::FLUSH_DRAWINGS();
+        FLUSH_DRAWINGS();
     }
 }
 void AreaExploration::errorHook()
