@@ -50,8 +50,8 @@ bool AreaExploration::configureHook()
     }
     V3DD::CONFIGURE_DEBUG_DRAWINGS_USE_PORT(this, channels_filtered);
 
-    frontGen = std::make_shared<FrontierGenerator>(_travConfig.get(), _costConfig.get());
-    explorer = std::make_shared<AreaExplorer>(frontGen);
+//     frontGen = std::make_shared<FrontierGenerator>(_travConfig.get(), _costConfig.get());
+//     explorer = std::make_shared<AreaExplorer>(frontGen);
 
 //     if(_coverageRadius.get() > 0)
 //     {

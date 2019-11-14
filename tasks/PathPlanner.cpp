@@ -32,17 +32,6 @@ void PathPlanner::setIfNotSet(const PathPlannerBase::States& newState)
         state(newState);
 }
 
-void PathPlanner::writeTravMap()
-{
-    envire::core::SpatioTemporal<maps::grid::TraversabilityBaseMap3d> strmap;
-    strmap.data = planner->getTraversabilityMap().copyCast<maps::grid::TraversabilityNodeBase *>();
-    strmap.frame_id = "Traversability";
-//     _tr_map.write(strmap);
-    
-    state(ugv_nav4d::PathPlannerBase::TRAVERSABILITY_MAP_GENERATED);
-}
-
-
 
 int32_t PathPlanner::triggerPathPlanning(const base::samples::RigidBodyState& start_position, const base::samples::RigidBodyState& goal_position)
 {
@@ -87,15 +76,14 @@ bool PathPlanner::configureHook()
     }
     V3DD::CONFIGURE_DEBUG_DRAWINGS_USE_PORT(this, channels_filtered);
 
-    planner.reset(new Planner(_primConfig.get(), _travConfig.get(), _mobilityConfig.get()));
+    planner.reset(new Planner(_primConfig.get(), _travConfig.get(), _mobilityConfig.get(), _plannerConfig.get()));
+    
     
     planner->setTravMapCallback([&] () 
     {
-        writeTravMap();
-        V3DD::FLUSH_DRAWINGS();
+        //this callback will be called whenever the planner has generated a new travmap.
+        state(ugv_nav4d::PathPlannerBase::TRAVERSABILITY_MAP_GENERATED);
     });
-    
-
     
     V3DD::FLUSH_DRAWINGS();
     
@@ -115,6 +103,7 @@ bool PathPlanner::startHook()
     gotMap = false;
     return true;
 }
+
 void PathPlanner::updateHook()
 {
     
@@ -128,6 +117,7 @@ void PathPlanner::updateHook()
     } else if(map_status == RTT::NewData)
     {
         gotMap = true;
+        setIfNotSet(GOT_MAP);
         planner->updateMap(map.getData());
     } 
 
@@ -159,25 +149,17 @@ void PathPlanner::updateHook()
         }
         
         setIfNotSet(PLANNING);
-        std::vector<base::Trajectory> trajectory;
-        std::vector<base::Trajectory> beautifiedTrajectory;
+        std::vector<base::Trajectory> trajectory2D;
+        std::vector<base::Trajectory> trajectory3D;
         
         
-        Planner::PLANNING_RESULT res = planner->plan(_maxTime.value(), start_pose, stop_pose, trajectory, beautifiedTrajectory, _dumpOnError.get());
-        
-        writeTravMap();
-               
-        TrajWMotions trajWMotions;
-        
+        Planner::PLANNING_RESULT res = planner->plan(_maxTime.value(), start_pose, stop_pose, trajectory2D, trajectory3D, _dumpOnError.get());
+
         switch(res)
         {
             case Planner::FOUND_SOLUTION:
-                _trajectory.write(trajectory);
-                _beautified_trajectory.write(beautifiedTrajectory);
-                // combined here to allow easier synchronisation of both objects in other modules
-                trajWMotions.trajectories = trajectory;
-                trajWMotions.motions = planner->getMotions();
-                _traj_with_motions.write(trajWMotions);
+                _trajectory2D.write(trajectory2D);
+                _trajectory3D.write(trajectory3D);
                 setIfNotSet(FOUND_SOLUTION);
                 break;
             
