@@ -50,19 +50,6 @@ int32_t PathPlanner::triggerPathPlanning(const base::samples::RigidBodyState& st
     return 1;
 }
 
-int32_t PathPlanner::triggerTravMap(const base::samples::RigidBodyState& start_position)
-{
-    if(!gotMap)
-        return 0;
-
-    start_pose = start_position;
-
-    genTravMap = true;
-    
-    return 1;
-}
-
-
 bool PathPlanner::configureHook()
 {
     std::vector<std::string> channels = V3DD::GET_DECLARED_CHANNELS();
@@ -85,7 +72,6 @@ bool PathPlanner::configureHook()
     planner->setTravMapCallback([&] () 
     {
         //this callback will be called whenever the planner has generated a new travmap.
-        state(ugv_nav4d::PathPlannerBase::TRAVERSABILITY_MAP_GENERATED);
     });
     
     V3DD::FLUSH_DRAWINGS();
@@ -102,7 +88,6 @@ bool PathPlanner::startHook()
     
     initalPatchAdded = false;
     executePlanning = false;
-    genTravMap = false;
     gotMap = false;
     return true;
 }
@@ -123,31 +108,11 @@ void PathPlanner::updateHook()
         planner->updateMap(map.getData());
         setIfNotSet(GOT_MAP);
     } 
-
-    if(genTravMap)
-    {
-        genTravMap = false;
-        
-        if(!initalPatchAdded)
-        {
-            std::cout << "ADDING INITIAL PATCH TASK" << std::endl;
-            planner->setInitialPatch(start_pose.getTransform(), _initialPatchRadius.get());
-            initalPatchAdded = true;
-        }
-        
-        //we would expand anyway if we plan...
-        if(!executePlanning)            
-        {
-            planner->genTravMap(start_pose);
-        }
-    }
     
-    std::cout << "PathPlanner Update: before execute planning" << std::endl;
     if(executePlanning)
     {
         if(!initalPatchAdded)
         {
-            std::cout << "ADDING INITIAL PATCH TASK" << std::endl;
             planner->setInitialPatch(start_pose.getTransform(), _initialPatchRadius.get());
             initalPatchAdded = true;
         }

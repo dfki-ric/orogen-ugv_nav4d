@@ -47,18 +47,11 @@ task_context "PathPlanner" do
 
     dynamic_output_port /^debug_/, "/boost/shared_ptr</vizkit3dDebugDrawings/CommandBuffer>"
     
-    #FIXME add documentation about frame of the start and goal
     operation("triggerPathPlanning").
-        arg("start_position", "base/samples/RigidBodyState").
-        arg("goal_position", "base/samples/RigidBodyState").
+        arg("start_position", "base/samples/RigidBodyState"). # should be travConfig.stepHeight above the floor
+        arg("goal_position", "base/samples/RigidBodyState"). # should be travConfig.stepHeight above the floor
         returns("int").
         doc("Triggers planning of a new path")
-
-    operation("triggerTravMap").
-        arg("start_position", "base/samples/RigidBodyState").
-        returns("int").
-        doc("Triggers generation of traversability map")
-
     
     runtime_states :NO_MAP,
         :GOT_MAP,

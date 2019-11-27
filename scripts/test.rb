@@ -59,7 +59,15 @@ Orocos.run 'ugv_nav4d::MapLoader' => 'loader',
     planner.triggerPathPlanning start, goal
     
     puts "Triggered planning\n"
+    sleep 2
 
+    # wait for planner to finish planning
+    while planner.state == :PLANNING
+        sleep 2
+    end 
+    puts "Done Planning\n"
+    puts "Planner state = #{planner.state}\n"
+    
   
   Readline.readline("Press Enter to exit")
 end
