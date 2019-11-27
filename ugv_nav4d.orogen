@@ -13,6 +13,8 @@ import_types_from "ugv_nav4d/DiscreteTheta.hpp"
 import_types_from "ugv_nav4d/PreComputedMotions.hpp"
 
 import_types_from "sbpl_spline_primitives/SplinePrimitivesConfig.hpp"
+
+using_library "vizkit3d_debug_drawings"
 import_types_from "vizkit3d_debug_drawings"
 
 using_library "ugv_nav4d"
@@ -43,6 +45,9 @@ task_context "PathPlanner" do
     output_port "planning_start", "base/samples/RigidBodyState"
     output_port "planning_goal", "base/samples/RigidBodyState"
 
+    dynamic_output_port /^debug_/, "/boost/shared_ptr</vizkit3dDebugDrawings/CommandBuffer>"
+    
+    #FIXME add documentation about frame of the start and goal
     operation("triggerPathPlanning").
         arg("start_position", "base/samples/RigidBodyState").
         arg("goal_position", "base/samples/RigidBodyState").
@@ -119,6 +124,8 @@ end
 task_context "MapLoader" do
 
     property "path", "std::string"
+    property "gridResolution", "double"
+    property "gapSize", "double"
     output_port("map", spatio_temporal('/maps/grid/MLSMapKalman'))
     
     operation("publishMap").
