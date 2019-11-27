@@ -11,7 +11,7 @@ Orocos.run 'ugv_nav4d::MapLoader' => 'loader',
   loader = Orocos.name_service.get 'loader'
   planner = Orocos.name_service.get 'planner'
 
-  loader.path = "/home/arne/git/transfit/planning/ugv_nav4d/test_data/test_area.ply"
+  loader.path = "/home/arne/git/transfit/planning/ugv_nav4d/test_data/test_area2.ply"
   loader.gridResolution = 0.1 # this has to be the same as planner.travConfig.gridResolution
   loader.gapSize = 0.2
   
@@ -30,22 +30,6 @@ Orocos.run 'ugv_nav4d::MapLoader' => 'loader',
   loader.publishMap
   
   
-#  Start: 
-#X: 
-#Y: 
-#Z: 1.55836
-#qx: 0
-#qy: 0
-#qz: 0
-#qwz: 1
-#End: 
-#X: 
-#Y: 
-#Z: 
-#qx: 0
-#qy: 0
-#qz: 0
-#qwz: 1
   
   # wait until planner has got the map
     while planner.state != :GOT_MAP
@@ -53,20 +37,23 @@ Orocos.run 'ugv_nav4d::MapLoader' => 'loader',
         sleep 2
     end 
     puts "Planner state = #{planner.state}\n"
-  
+     
     
     # start and end position are in body frame, not in ground frame
-    
+    # this are example positions for test_area2.ply
     start = Types.base.samples.RigidBodyState.new
-    start.position.x = 2.86889
-    start.position.y = 7.26889
-    start.position.z = 1.56162
-    start.orientation = Eigen::Quaternion.Identity
+    start.position.x = 6.92761
+    start.position.y = 3.7
+    start.position.z = 1.31156
+    start.orientation.x = 0
+    start.orientation.y = 0
+    start.orientation.z = 0.707107
+    start.orientation.w = -0.707107
 
     goal = Types.base.samples.RigidBodyState.new
-    goal.position.x = 3.56528
-    goal.position.y = 4.52938
-    goal.position.z = 0.5
+    goal.position.x = 7.18159
+    goal.position.y = 4.05955
+    goal.position.z = 0.281563
     goal.orientation = Eigen::Quaternion.Identity   
     
     planner.triggerPathPlanning start, goal
