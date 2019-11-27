@@ -40,8 +40,7 @@ int32_t PathPlanner::triggerPathPlanning(const base::samples::RigidBodyState& st
 
     start_pose = start_position;
     stop_pose = goal_position;
-    //goal position is in ground frame, transform to body frame
-    stop_pose.position += stop_pose.orientation * Eigen::Vector3d(0,0, _travConfig.get().distToGround);
+
     
     _planning_start.write(start_position);
     _planning_goal.write(goal_position);
@@ -68,12 +67,16 @@ bool PathPlanner::configureHook()
 {
     std::vector<std::string> channels = V3DD::GET_DECLARED_CHANNELS();
     std::vector<std::string> channels_filtered;
+    
     for(const std::string& channel : channels)
     {
-        //check if starts with 
-        if (channel.rfind("ugv_nav4d", 0) == 0)
+        //check if it contains ugv
+        if(channel.find("ugv") != std::string::npos)
+        {
             channels_filtered.push_back(channel);
+        }
     }
+    
     V3DD::CONFIGURE_DEBUG_DRAWINGS_USE_PORT(this, channels_filtered);
 
     planner.reset(new Planner(_primConfig.get(), _travConfig.get(), _mobilityConfig.get(), _plannerConfig.get()));
@@ -117,8 +120,8 @@ void PathPlanner::updateHook()
     } else if(map_status == RTT::NewData)
     {
         gotMap = true;
-        setIfNotSet(GOT_MAP);
         planner->updateMap(map.getData());
+        setIfNotSet(GOT_MAP);
     } 
 
     if(genTravMap)
@@ -184,8 +187,8 @@ void PathPlanner::updateHook()
         executePlanning = false;
     }
     
-    PathPlannerBase::updateHook();
     V3DD::FLUSH_DRAWINGS();
+    PathPlannerBase::updateHook();
 }
 void PathPlanner::errorHook()
 {
