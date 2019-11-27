@@ -2,6 +2,7 @@
 maxTime:
   microseconds: 20000000
 
+initialPatchRadius: 0
 
 primConfig:
   gridSize: 0.1
