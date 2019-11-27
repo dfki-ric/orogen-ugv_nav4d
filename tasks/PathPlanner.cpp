@@ -139,6 +139,7 @@ void PathPlanner::updateHook()
         }
     }
     
+    std::cout << "PathPlanner Update: before execute planning" << std::endl;
     if(executePlanning)
     {
         if(!initalPatchAdded)
