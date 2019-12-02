@@ -4,7 +4,7 @@
 #include "ugv_nav4dTypes.hpp"
 #include <ugv_nav4d/Planner.hpp>
 #include <envire_core/items/SpatioTemporal.hpp>
-#include <vizkit3d_debug_drawings/DebugDrawing.h>
+#include <vizkit3d_debug_drawings/DebugDrawing.hpp>
 #include <trajectory_follower/SubTrajectory.hpp>
 
 #include <boost/archive/binary_iarchive.hpp>
@@ -32,17 +32,6 @@ void PathPlanner::setIfNotSet(const PathPlannerBase::States& newState)
         state(newState);
 }
 
-void PathPlanner::writeTravMap()
-{
-    envire::core::SpatioTemporal<maps::grid::TraversabilityBaseMap3d> strmap;
-    strmap.data = planner->getTraversabilityMap().copyCast<maps::grid::TraversabilityNodeBase *>();
-    strmap.frame_id = "Traversability";
-    _tr_map.write(strmap);
-    
-    state(ugv_nav4d::PathPlannerBase::TRAVERSABILITY_MAP_GENERATED);
-}
-
-
 
 int32_t PathPlanner::triggerPathPlanning(const base::samples::RigidBodyState& start_position, const base::samples::RigidBodyState& goal_position)
 {
@@ -51,8 +40,7 @@ int32_t PathPlanner::triggerPathPlanning(const base::samples::RigidBodyState& st
 
     start_pose = start_position;
     stop_pose = goal_position;
-    //goal position is in ground frame, transform to body frame
-    stop_pose.position += stop_pose.orientation * Eigen::Vector3d(0,0, _travConfig.get().distToGround);
+
     
     _planning_start.write(start_position);
     _planning_goal.write(goal_position);
@@ -62,37 +50,31 @@ int32_t PathPlanner::triggerPathPlanning(const base::samples::RigidBodyState& st
     return 1;
 }
 
-int32_t PathPlanner::triggerTravMap(const base::samples::RigidBodyState& start_position)
-{
-    if(!gotMap)
-        return 0;
-
-    start_pose = start_position;
-
-    genTravMap = true;
-    
-    return 1;
-}
-
-/// The following lines are template definitions for the various state machine
-// hooks defined by Orocos::RTT. See PathPlanner.hpp for more detailed
-// documentation about them.
-
 bool PathPlanner::configureHook()
 {
-    CONFIGURE_DEBUG_DRAWINGS_USE_PORT_NO_THROW(this);
+    std::vector<std::string> channels = V3DD::GET_DECLARED_CHANNELS();
+    std::vector<std::string> channels_filtered;
+    
+    for(const std::string& channel : channels)
+    {
+        //check if it contains ugv
+        if(channel.find("ugv") != std::string::npos)
+        {
+            channels_filtered.push_back(channel);
+        }
+    }
+    
+    V3DD::CONFIGURE_DEBUG_DRAWINGS_USE_PORT(this, channels_filtered);
 
-    planner.reset(new Planner(_primConfig.get(), _travConfig.get(), _mobilityConfig.get()));
+    planner.reset(new Planner(_primConfig.get(), _travConfig.get(), _mobilityConfig.get(), _plannerConfig.get()));
+    
     
     planner->setTravMapCallback([&] () 
     {
-        writeTravMap();
-        FLUSH_DRAWINGS();
+        //this callback will be called whenever the planner has generated a new travmap.
     });
     
-
-    
-    FLUSH_DRAWINGS();
+    V3DD::FLUSH_DRAWINGS();
     
     if (! PathPlannerBase::configureHook())
         return false;
@@ -106,13 +88,12 @@ bool PathPlanner::startHook()
     
     initalPatchAdded = false;
     executePlanning = false;
-    genTravMap = false;
     gotMap = false;
     return true;
 }
+
 void PathPlanner::updateHook()
 {
-    CONFIGURE_DEBUG_DRAWINGS_USE_PORT_NO_THROW(this);
     
     envire::core::SpatioTemporal<maps::grid::MLSMapKalman> map;
     auto map_status = _map.readNewest(map, false);
@@ -125,57 +106,29 @@ void PathPlanner::updateHook()
     {
         gotMap = true;
         planner->updateMap(map.getData());
+        setIfNotSet(GOT_MAP);
     } 
-
-    if(genTravMap)
-    {
-        genTravMap = false;
-        
-        if(!initalPatchAdded)
-        {
-            std::cout << "ADDING INITIAL PATCH TASK" << std::endl;
-            planner->setInitialPatch(start_pose.getTransform(), _initialPatchRadius.get());
-            initalPatchAdded = true;
-        }
-        
-        //we would expand anyway if we plan...
-        if(!executePlanning)            
-        {
-            planner->genTravMap(start_pose);
-        }
-    }
     
     if(executePlanning)
     {
         if(!initalPatchAdded)
         {
-            std::cout << "ADDING INITIAL PATCH TASK" << std::endl;
             planner->setInitialPatch(start_pose.getTransform(), _initialPatchRadius.get());
             initalPatchAdded = true;
         }
         
         setIfNotSet(PLANNING);
-        std::vector<trajectory_follower::SubTrajectory> trajectory;
-        std::vector<trajectory_follower::SubTrajectory> beautifiedTrajectory;
+        std::vector<base::Trajectory> trajectory2D;
+        std::vector<base::Trajectory> trajectory3D;
         
-        CLEAR_DRAWING("planner_goal");
-        DRAW_AXES("planner_goal", stop_pose.position, stop_pose.orientation);
         
-        Planner::PLANNING_RESULT res = planner->plan(_maxTime.value(), start_pose, stop_pose, trajectory, beautifiedTrajectory, _dumpOnError.get());
-        
-        writeTravMap();
-               
-        TrajWMotions trajWMotions;
-        
+        Planner::PLANNING_RESULT res = planner->plan(_maxTime.value(), start_pose, stop_pose, trajectory2D, trajectory3D, _dumpOnError.get());
+
         switch(res)
         {
             case Planner::FOUND_SOLUTION:
-                _trajectory.write(trajectory);
-                _beautified_trajectory.write(beautifiedTrajectory);
-                // combined here to allow easier synchronisation of both objects in other modules
-                trajWMotions.trajectories = trajectory;
-                trajWMotions.motions = planner->getMotions();
-                _traj_with_motions.write(trajWMotions);
+                _trajectory2D.write(trajectory2D);
+                _trajectory3D.write(trajectory3D);
                 setIfNotSet(FOUND_SOLUTION);
                 break;
             
@@ -199,8 +152,8 @@ void PathPlanner::updateHook()
         executePlanning = false;
     }
     
+    V3DD::FLUSH_DRAWINGS();
     PathPlannerBase::updateHook();
-    FLUSH_DRAWINGS();
 }
 void PathPlanner::errorHook()
 {

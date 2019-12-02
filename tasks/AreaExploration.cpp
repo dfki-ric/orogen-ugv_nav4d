@@ -42,8 +42,8 @@ bool AreaExploration::configureHook()
 {
     CONFIGURE_DEBUG_DRAWINGS_USE_PORT_NO_THROW(this);
 
-    frontGen = std::make_shared<FrontierGenerator>(_travConfig.get(), _costConfig.get());
-    explorer = std::make_shared<AreaExplorer>(frontGen);
+//     frontGen = std::make_shared<FrontierGenerator>(_travConfig.get(), _costConfig.get());
+//     explorer = std::make_shared<AreaExplorer>(frontGen);
 
     if(_coverageRadius.get() > 0)
     {
