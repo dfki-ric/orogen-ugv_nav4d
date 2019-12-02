@@ -3,7 +3,7 @@
 #include "AreaExploration.hpp"
 #include <ugv_nav4d/AreaExplorer.hpp>
 #include <ugv_nav4d/FrontierGenerator.hpp>
-#include <vizkit3d_debug_drawings/DebugDrawing.h>
+#include <vizkit3d_debug_drawings/DebugDrawing.hpp>
 
 #include <maps/operations/CoverageMapGeneration.hpp>
 
@@ -76,8 +76,7 @@ bool AreaExploration::startHook()
 }
 void AreaExploration::updateHook()
 {
-    CONFIGURE_DEBUG_DRAWINGS_USE_PORT_NO_THROW(this);
-    
+   
     AreaExplorationBase::updateHook();
 
     if(_map.readNewest(map, false) == RTT::NewData)
@@ -141,7 +140,7 @@ void AreaExploration::updateHook()
             envire::core::SpatioTemporal<maps::grid::TraversabilityBaseMap3d> trMap;
             trMap.frame_id = "AreaExploration";
             trMap.data = frontGen->getTraversabilityMap().copyCast<maps::grid::TraversabilityNodeBase *>();
-            _tr_map.write(trMap);
+//             _tr_map.write(trMap);
         }
         
         generateFrontiers = false;
