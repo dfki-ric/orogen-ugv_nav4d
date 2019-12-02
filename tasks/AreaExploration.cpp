@@ -34,16 +34,22 @@ void AreaExploration::clearPlannerMap()
 
 }
 
-/// The following lines are template definitions for the various state machine
-// hooks defined by Orocos::RTT. See AreaExploration.hpp for more detailed
-// documentation about them.
-
 bool AreaExploration::configureHook()
 {
-    CONFIGURE_DEBUG_DRAWINGS_USE_PORT_NO_THROW(this);
+    std::vector<std::string> channels = V3DD::GET_DECLARED_CHANNELS();
+    std::vector<std::string> channels_filtered;
+    for(const std::string& channel : channels)
+    {
+        //check if it contains ugv
+        if(channel.find("area_explore") != std::string::npos)
+        {
+            channels_filtered.push_back(channel);
+        }
+    }
+    V3DD::CONFIGURE_DEBUG_DRAWINGS_USE_PORT(this, channels_filtered);
 
-//     frontGen = std::make_shared<FrontierGenerator>(_travConfig.get(), _costConfig.get());
-//     explorer = std::make_shared<AreaExplorer>(frontGen);
+    frontGen = std::make_shared<FrontierGenerator>(_travConfig.get(), _costConfig.get());
+    explorer = std::make_shared<AreaExplorer>(frontGen);
 
     if(_coverageRadius.get() > 0)
     {
@@ -51,7 +57,7 @@ bool AreaExploration::configureHook()
     }
     else coverage.reset();
 
-    FLUSH_DRAWINGS();
+    V3DD::FLUSH_DRAWINGS();
     
     if (! AreaExplorationBase::configureHook())
         return false;
@@ -140,7 +146,7 @@ void AreaExploration::updateHook()
         
         generateFrontiers = false;
         
-        FLUSH_DRAWINGS();
+        V3DD::FLUSH_DRAWINGS();
     }
 }
 void AreaExploration::errorHook()

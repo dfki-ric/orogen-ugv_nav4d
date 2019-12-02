@@ -1,0 +1,7 @@
+---
+- time: 20191127-1702
+  cmdline: "/home/arne/git/transfit/gui/vizkit/bin/rock-display "
+  robot_name: default
+  robot_type: default
+  app_name: scripts
+  app_dir: "/home/arne/git/transfit/planning/orogen/ugv_nav4d/scripts"

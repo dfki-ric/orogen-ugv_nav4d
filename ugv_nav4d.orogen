@@ -71,7 +71,7 @@ task_context "AreaExploration" do
     needs_configuration
     
     property "travConfig", "ugv_nav4d::TraversabilityConfig"
- #   property "costConfig", "ugv_nav4d::CostFunctionParameters"
+    property "costConfig", "ugv_nav4d::FrontierCostFunctionParameters"
     property("initialPatchRadius","double", 0.0)
 
     #if positive, mark a sphere of the given radius as already covered (i.e., filter it out as goal position)
@@ -127,42 +127,6 @@ task_context "MapLoader" do
     periodic(1.0)
 end
 
-task_context "PoseWatchdog" do
-    
-    property "primConfig", "sbpl_spline_primitives::SplinePrimitivesConfig"
-    property "travConfig", "ugv_nav4d::TraversabilityConfig"
-    property "initialPatchRadius", "double"
-    property "abortTrajectory", "bool", true
-            
-    # Input ports
-    input_port("currentTrajectory", "std::vector<base/Trajectory>").
-        doc("the part of the trajectory the robot is currently following").
-        needs_buffered_connection
-
-    input_port("robot_pose", "/base/samples/RigidBodyState").
-        doc "Position and orientation of the Robot"
-        
-    input_port("map", spatio_temporal('/maps/grid/MLSMapKalman')).
-        doc "Map the robot is driving on"
-        
- #   output_port("obstacle_map", spatio_temporal('/maps/grid/TraversabilityBaseMap3d')).
- #       doc "Obstacle map generated from the mls map"
-
-    output_port("motion_command_override", "base/commands/Motion2D").
-        doc "This motion command is published whenever the watchdog wants to stop the robot from moving"
-        
-    operation("reset").
-        doc("Resets the watchdog after it was triggered")
-        
-        
-    runtime_states :WATCHING, :TRAJECTORY_ABORTED, :WAITING_FOR_DATA, :RESETTED
-
-    error_states :ERROR, :IGNORING
-
-    needs_configuration
-    port_driven
-
-end
 
 typekit do
     export_types 'ugv_nav4d/Motion'
