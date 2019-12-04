@@ -3,7 +3,7 @@
 #include "AreaExploration.hpp"
 #include <ugv_nav4d/AreaExplorer.hpp>
 #include <ugv_nav4d/FrontierGenerator.hpp>
-#include <vizkit3d_debug_drawings/DebugDrawing.h>
+#include <vizkit3d_debug_drawings/DebugDrawing.hpp>
 
 #include <maps/operations/CoverageMapGeneration.hpp>
 
@@ -34,13 +34,19 @@ void AreaExploration::clearPlannerMap()
 
 }
 
-/// The following lines are template definitions for the various state machine
-// hooks defined by Orocos::RTT. See AreaExploration.hpp for more detailed
-// documentation about them.
-
 bool AreaExploration::configureHook()
 {
-    CONFIGURE_DEBUG_DRAWINGS_USE_PORT_NO_THROW(this);
+    std::vector<std::string> channels = V3DD::GET_DECLARED_CHANNELS();
+    std::vector<std::string> channels_filtered;
+    for(const std::string& channel : channels)
+    {
+        //check if it contains ugv
+        if(channel.find("area_explore") != std::string::npos)
+        {
+            channels_filtered.push_back(channel);
+        }
+    }
+    V3DD::CONFIGURE_DEBUG_DRAWINGS_USE_PORT(this, channels_filtered);
 
     frontGen = std::make_shared<FrontierGenerator>(_travConfig.get(), _costConfig.get());
     explorer = std::make_shared<AreaExplorer>(frontGen);
@@ -51,7 +57,7 @@ bool AreaExploration::configureHook()
     }
     else coverage.reset();
 
-    FLUSH_DRAWINGS();
+    V3DD::FLUSH_DRAWINGS();
     
     if (! AreaExplorationBase::configureHook())
         return false;
@@ -70,8 +76,7 @@ bool AreaExploration::startHook()
 }
 void AreaExploration::updateHook()
 {
-    CONFIGURE_DEBUG_DRAWINGS_USE_PORT_NO_THROW(this);
-    
+   
     AreaExplorationBase::updateHook();
 
     if(_map.readNewest(map, false) == RTT::NewData)
@@ -135,12 +140,12 @@ void AreaExploration::updateHook()
             envire::core::SpatioTemporal<maps::grid::TraversabilityBaseMap3d> trMap;
             trMap.frame_id = "AreaExploration";
             trMap.data = frontGen->getTraversabilityMap().copyCast<maps::grid::TraversabilityNodeBase *>();
-            _tr_map.write(trMap);
+//             _tr_map.write(trMap);
         }
         
         generateFrontiers = false;
         
-        FLUSH_DRAWINGS();
+        V3DD::FLUSH_DRAWINGS();
     }
 }
 void AreaExploration::errorHook()

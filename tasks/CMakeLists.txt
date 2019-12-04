@@ -2,6 +2,11 @@
 
 include(ugv_nav4dTaskLib)
 add_definitions(-DENABLE_DEBUG_DRAWINGS)
+add_definitions(-DUSE_PORTS)
+
+
+
+
 ADD_LIBRARY(${UGV_NAV4D_TASKLIB_NAME} SHARED 
     ${UGV_NAV4D_TASKLIB_SOURCES})
 add_dependencies(${UGV_NAV4D_TASKLIB_NAME}

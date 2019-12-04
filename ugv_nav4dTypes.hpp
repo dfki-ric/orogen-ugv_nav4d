@@ -7,11 +7,6 @@
 
 namespace ugv_nav4d
 {
-    struct TrajWMotions
-    {
-        std::vector<trajectory_follower::SubTrajectory> trajectories;
-        std::vector<Motion> motions;
-    };
 }
 
 

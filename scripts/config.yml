@@ -1,0 +1,50 @@
+--- name:default
+maxTime:
+  microseconds: 20000000
+
+initialPatchRadius: 0
+
+primConfig:
+  gridSize: 0.1
+  numAngles: 24
+  numEndAngles: 12
+  destinationCircleRadius: 5
+  cellSkipFactor: 1.0
+  generatePointTurnMotions: True
+  generateLateralMotions: False
+  generateBackwardMotions: True
+  generateForwardMotions: True
+  splineOrder: 4;
+
+travConfig:
+  gridResolution: 0.1
+  maxSlope: 0.57  
+  maxStepHeight: 0.3  
+  robotSizeX: 0.9  
+  robotSizeY:  0.5  
+  robotHeight: 0.9   
+  slopeMetricScale: 0.0  
+  slopeMetric: :NONE  
+  inclineLimittingMinSlope: 0.22   
+  inclineLimittingLimit: 0.43 
+  parallelismEnabled: true  
+  costFunctionDist: 0.4  
+  distToGround: 0.2  
+  minTraversablePercentage: 0.5  
+  allowForwardDownhill: True  
+  enableInclineLimitting: True
+
+mobilityConfig:
+  translationSpeed: 0.2    
+  rotationSpeed: 0.6    
+  minTurningRadius: 0.2   
+  multiplierForward: 1    
+  multiplierBackward: 1    
+  multiplierLateral: 3    
+  multiplierBackwardTurn: 1    
+  multiplierForwardTurn: 1    
+  multiplierPointTurn: 3    
+
+plannerConfig:
+  epsilonSteps: 2.0
+  initialEpsilon: 20.0
