@@ -71,7 +71,7 @@ task_context "AreaExploration" do
     needs_configuration
     
     property "travConfig", "ugv_nav4d::TraversabilityConfig"
-    property "costConfig", "ugv_nav4d::FrontierCostFunctionParameters"
+    property "costConfig", "ugv_nav4d::FrontierGeneratorParameters"
     property("initialPatchRadius","double", 0.0)
 
     #if positive, mark a sphere of the given radius as already covered (i.e., filter it out as goal position)
