@@ -27,7 +27,6 @@ travConfig:
   slopeMetric: :NONE  
   inclineLimittingMinSlope: 0.22   
   inclineLimittingLimit: 0.43 
-  parallelismEnabled: true  
   costFunctionDist: 0.4  
   distToGround: 0.2  
   minTraversablePercentage: 0.5  
@@ -48,3 +47,4 @@ mobilityConfig:
 plannerConfig:
   epsilonSteps: 2.0
   initialEpsilon: 20.0
+  numThreads: 6
