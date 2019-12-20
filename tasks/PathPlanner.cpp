@@ -50,6 +50,41 @@ int32_t PathPlanner::triggerPathPlanning(const base::samples::RigidBodyState& st
     return 1;
 }
 
+int32_t PathPlanner::triggerPathPlanning2(const base::samples::RigidBodyState& goal_position)
+{
+    if(!gotMap)
+        return 0;
+
+    // read start pose from input port
+    _start_pose_samples.read(start_pose);
+
+    stop_pose = goal_position;
+    
+    _planning_start.write(start_pose);
+    _planning_goal.write(goal_position);
+    
+    executePlanning = true;
+    
+    return 1;
+}
+
+int32_t PathPlanner::triggerPathPlanningNoArgs()
+{
+    if(!gotMap)
+        return 0;
+
+    // read start pose from input port
+    _start_pose_samples.read(start_pose);
+    _goal_pose_samples.read(stop_pose);
+
+    _planning_start.write(start_pose);
+    _planning_goal.write(stop_pose);
+    
+    executePlanning = true;
+    
+    return 1;
+}
+
 bool PathPlanner::configureHook()
 {
     std::vector<std::string> channels = V3DD::GET_DECLARED_CHANNELS();
