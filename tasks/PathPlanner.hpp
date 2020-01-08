@@ -2,8 +2,11 @@
 
 #include "ugv_nav4d/PathPlannerBase.hpp"
 #include <memory>
+#include <Eigen/Core>
 
 namespace ugv_nav4d{
+
+    using Vector2ui = Eigen::Matrix<uint64_t, 2, 1>;
 
     class Planner;
         
@@ -48,6 +51,8 @@ namespace ugv_nav4d{
         virtual boost::int32_t triggerPathPlanning2(::base::samples::RigidBodyState const & goal);
         
         virtual boost::int32_t triggerPathPlanningNoArgs();
+
+        Vector2ui gridTranslation() const;
 
     public:
         /** TaskContext constructor for PathPlanner

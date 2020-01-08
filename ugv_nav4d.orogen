@@ -21,7 +21,7 @@ using_library "ugv_nav4d"
 using_library "trajectory_follower"
 using_library "base-lib"
 
-
+import_types_from "GridOffset.hpp"
 
 task_context "PathPlanner" do
     needs_configuration
@@ -33,6 +33,7 @@ task_context "PathPlanner" do
     property "plannerConfig", "ugv_nav4d::PlannerConfig"
     property("initialPatchRadius","double", 0.0)
     property("dumpOnError","int", 0)
+    property "gridOffset", "/ugv_nav4d/GridOffset"
     
     input_port "map", spatio_temporal('/maps/grid/MLSMapKalman')
     output_port "trajectory2D", "std::vector<base/Trajectory>"

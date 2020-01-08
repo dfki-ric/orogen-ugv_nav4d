@@ -203,3 +203,9 @@ void PathPlanner::cleanupHook()
     planner.reset();
     PathPlannerBase::cleanupHook();
 }
+
+Vector2ui PathPlanner::gridTranslation() const
+{
+    const auto &transform = _gridOffset.rvalue();
+    return Vector2ui(transform.translation[0], transform.translation[1]);
+}
