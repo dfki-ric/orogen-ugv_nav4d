@@ -12,6 +12,10 @@
 
 using namespace ugv_nav4d;
 
+using Eigen::Vector3d;
+using Eigen::Affine3d;
+using Eigen::Translation3d;
+
 PathPlanner::PathPlanner(std::string const& name)
     : PathPlannerBase(name), planner(nullptr)
 {
@@ -41,9 +45,10 @@ int32_t PathPlanner::triggerPathPlanning(const base::samples::RigidBodyState& st
     start_pose = start_position;
     stop_pose = goal_position;
 
+    translateStartStopPose();
     
-    _planning_start.write(start_position);
-    _planning_goal.write(goal_position);
+    _planning_start.write(start_pose);
+    _planning_goal.write(stop_pose);
     
     executePlanning = true;
     
@@ -59,9 +64,11 @@ int32_t PathPlanner::triggerPathPlanning2(const base::samples::RigidBodyState& g
     _start_pose_samples.read(start_pose);
 
     stop_pose = goal_position;
+
+    translateStartStopPose();
     
     _planning_start.write(start_pose);
-    _planning_goal.write(goal_position);
+    _planning_goal.write(stop_pose);
     
     executePlanning = true;
     
@@ -76,6 +83,8 @@ int32_t PathPlanner::triggerPathPlanningNoArgs()
     // read start pose from input port
     _start_pose_samples.read(start_pose);
     _goal_pose_samples.read(stop_pose);
+
+    translateStartStopPose();
 
     _planning_start.write(start_pose);
     _planning_goal.write(stop_pose);
@@ -140,6 +149,7 @@ void PathPlanner::updateHook()
     } else if(map_status == RTT::NewData)
     {
         gotMap = true;
+        const_cast<maps::grid::MLSMapKalman&>(map.getData()).moveBy(gridTranslation());
         planner->updateMap(map.getData());
         setIfNotSet(GOT_MAP);
     } 
@@ -208,4 +218,12 @@ Eigen::Vector2i PathPlanner::gridTranslation() const
 {
     const auto &transform = _gridOffset.rvalue();
     return Eigen::Vector2i(transform.translation[0], transform.translation[1]);
+}
+
+void PathPlanner::translateStartStopPose()
+{
+    const Translation3d translation(Vector3d(gridTranslation().cast<double>(), .0));
+    const Affine3d gridTransform(translation);
+    start_pose.setTransform(gridTransform * start_pose);
+    stop_pose.setTransform(gridTransform * stop_pose);
 }
