@@ -204,8 +204,8 @@ void PathPlanner::cleanupHook()
     PathPlannerBase::cleanupHook();
 }
 
-Vector2ui PathPlanner::gridTranslation() const
+Eigen::Vector2i PathPlanner::gridTranslation() const
 {
     const auto &transform = _gridOffset.rvalue();
-    return Vector2ui(transform.translation[0], transform.translation[1]);
+    return Eigen::Vector2i(transform.translation[0], transform.translation[1]);
 }

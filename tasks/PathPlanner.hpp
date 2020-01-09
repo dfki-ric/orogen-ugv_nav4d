@@ -6,8 +6,6 @@
 
 namespace ugv_nav4d{
 
-    using Vector2ui = Eigen::Matrix<uint64_t, 2, 1>;
-
     class Planner;
         
     /*! \class PathPlanner
@@ -52,7 +50,9 @@ namespace ugv_nav4d{
         
         virtual boost::int32_t triggerPathPlanningNoArgs();
 
-        Vector2ui gridTranslation() const;
+        Eigen::Vector2i gridTranslation() const;
+
+        void translateStartStopPose();
 
     public:
         /** TaskContext constructor for PathPlanner

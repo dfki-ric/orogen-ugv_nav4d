@@ -7,7 +7,7 @@ namespace ugv_nav4d
 {
     struct GridOffset
     {
-        uint32_t translation[2];
+        int32_t translation[2];
     };
 }
 
