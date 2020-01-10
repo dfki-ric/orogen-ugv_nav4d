@@ -149,7 +149,7 @@ void PathPlanner::updateHook()
     } else if(map_status == RTT::NewData)
     {
         gotMap = true;
-        const_cast<maps::grid::MLSMapKalman&>(map.getData()).moveBy(gridTranslation());
+        map.data.moveBy(gridTranslation());
         planner->updateMap(map.getData());
         setIfNotSet(GOT_MAP);
     } 
