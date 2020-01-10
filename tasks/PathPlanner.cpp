@@ -222,8 +222,9 @@ Eigen::Vector2i PathPlanner::gridTranslation() const
 
 void PathPlanner::translateStartStopPose()
 {
+    const double gridResolution = _travConfig.rvalue().gridResolution;
     Vector3d translationVector;
-    translationVector << gridTranslation().cast<double>(), .0;
+    translationVector << gridTranslation().cast<double>() * gridResolution, .0;
     const Affine3d gridTransform{Translation3d(translationVector)};
     start_pose.setTransform(gridTransform * start_pose);
     stop_pose.setTransform(gridTransform * stop_pose);
