@@ -50,7 +50,7 @@ namespace ugv_nav4d{
         
         virtual boost::int32_t triggerPathPlanningNoArgs();
 
-        Eigen::Vector2i gridTranslation() const;
+        Eigen::Vector3d gridTranslation() const;
 
         void translateStartStopPose();
 
