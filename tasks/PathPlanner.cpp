@@ -149,7 +149,7 @@ void PathPlanner::updateHook()
     } else if(map_status == RTT::NewData)
     {
         gotMap = true;
-        map.data.moveBy(gridTranslation());
+        map.data.translate(gridTranslation());
         planner->updateMap(map.getData());
         setIfNotSet(GOT_MAP);
     } 
@@ -214,17 +214,17 @@ void PathPlanner::cleanupHook()
     PathPlannerBase::cleanupHook();
 }
 
-Eigen::Vector2i PathPlanner::gridTranslation() const
+Eigen::Vector3d PathPlanner::gridTranslation() const
 {
-    const auto &transform = _gridOffset.rvalue();
-    return Eigen::Vector2i(transform.translation[0], transform.translation[1]);
+    const auto& translation = _gridOffset.rvalue().translation;
+    return Eigen::Vector3d(translation[0], translation[1], 0.);
 }
 
 void PathPlanner::translateStartStopPose()
 {
-    const double gridResolution = _travConfig.rvalue().gridResolution;
+    const auto& translation = _gridOffset.rvalue().translation;
     Vector3d translationVector;
-    translationVector << gridTranslation().cast<double>() * gridResolution, .0;
+    translationVector << translation[0], translation[1], .0;
     const Affine3d gridTransform{Translation3d(translationVector)};
     start_pose.setTransform(gridTransform * start_pose);
     stop_pose.setTransform(gridTransform * stop_pose);
