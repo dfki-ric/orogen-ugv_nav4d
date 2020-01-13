@@ -37,45 +37,7 @@ void PathPlanner::setIfNotSet(const PathPlannerBase::States& newState)
 }
 
 
-int32_t PathPlanner::triggerPathPlanning(const base::samples::RigidBodyState& start_position, const base::samples::RigidBodyState& goal_position)
-{
-    if(!gotMap)
-        return 0;
-
-    start_pose = start_position;
-    stop_pose = goal_position;
-
-    translateStartStopPose();
-    
-    _planning_start.write(start_pose);
-    _planning_goal.write(stop_pose);
-    
-    executePlanning = true;
-    
-    return 1;
-}
-
-int32_t PathPlanner::triggerPathPlanning2(const base::samples::RigidBodyState& goal_position)
-{
-    if(!gotMap)
-        return 0;
-
-    // read start pose from input port
-    _start_pose_samples.read(start_pose);
-
-    stop_pose = goal_position;
-
-    translateStartStopPose();
-    
-    _planning_start.write(start_pose);
-    _planning_goal.write(stop_pose);
-    
-    executePlanning = true;
-    
-    return 1;
-}
-
-int32_t PathPlanner::triggerPathPlanningNoArgs()
+int32_t PathPlanner::triggerPathPlanning()
 {
     if(!gotMap)
         return 0;
@@ -83,8 +45,6 @@ int32_t PathPlanner::triggerPathPlanningNoArgs()
     // read start pose from input port
     _start_pose_samples.read(start_pose);
     _goal_pose_samples.read(stop_pose);
-
-    translateStartStopPose();
 
     _planning_start.write(start_pose);
     _planning_goal.write(stop_pose);
@@ -110,7 +70,11 @@ bool PathPlanner::configureHook()
     
     V3DD::CONFIGURE_DEBUG_DRAWINGS_USE_PORT(this, channels_filtered);
 
-    planner.reset(new Planner(_primConfig.get(), _travConfig.get(), _mobilityConfig.get(), _plannerConfig.get()));
+    const auto& translation = _gridOffset.rvalue().translation;
+    Eigen::Affine3d mls2Ground(Eigen::Affine3d::Identity());
+    mls2Ground.translation() = Eigen::Vector3d(translation[0], translation[1], 0);
+
+    planner.reset(new Planner(_primConfig.get(), _travConfig.get(), _mobilityConfig.get(), _plannerConfig.get(), mls2Ground));
     
     
     planner->setTravMapCallback([&] () 
@@ -167,16 +131,14 @@ void PathPlanner::updateHook()
         std::vector<base::Trajectory> trajectory3D;
         
         
-        Planner::PLANNING_RESULT res = planner->plan(_maxTime.value(), start_pose, stop_pose, trajectory2D, trajectory3D, _dumpOnError.get());
-
+        Planner::PLANNING_RESULT res = planner->plan(_maxTime.value(), start_pose, stop_pose, trajectory2D, trajectory3D, _dumpOnError.get(), _dumpOnSuccess.get());
         switch(res)
         {
-            case Planner::FOUND_SOLUTION:
+            case Planner::FOUND_SOLUTION:                      
                 _trajectory2D.write(trajectory2D);
                 _trajectory3D.write(trajectory3D);
                 setIfNotSet(FOUND_SOLUTION);
-                break;
-            
+                break;      
             case Planner::GOAL_INVALID:
                 setIfNotSet(ugv_nav4d::PathPlannerBase::GOAL_INVALID);
                 break;
@@ -218,14 +180,4 @@ Eigen::Vector3d PathPlanner::gridTranslation() const
 {
     const auto& translation = _gridOffset.rvalue().translation;
     return Eigen::Vector3d(translation[0], translation[1], 0.);
-}
-
-void PathPlanner::translateStartStopPose()
-{
-    const auto& translation = _gridOffset.rvalue().translation;
-    Vector3d translationVector;
-    translationVector << translation[0], translation[1], .0;
-    const Affine3d gridTransform{Translation3d(translationVector)};
-    start_pose.setTransform(gridTransform * start_pose);
-    stop_pose.setTransform(gridTransform * stop_pose);
 }
