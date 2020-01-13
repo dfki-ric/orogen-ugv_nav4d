@@ -33,6 +33,7 @@ task_context "PathPlanner" do
     property "plannerConfig", "ugv_nav4d::PlannerConfig"
     property("initialPatchRadius","double", 0.0)
     property("dumpOnError","int", 0)
+    property("dumpOnSuccess","int", 0)
     property "gridOffset", "/ugv_nav4d/GridOffset"
     
     input_port "map", spatio_temporal('/maps/grid/MLSMapKalman')
@@ -51,18 +52,18 @@ task_context "PathPlanner" do
     input_port "start_pose_samples", "base/samples/RigidBodyState"
     input_port "goal_pose_samples", "base/samples/RigidBodyState"
 
+    #operation("triggerPathPlanning").
+    #    arg("start_position", "base/samples/RigidBodyState"). # should be travConfig.stepHeight above the floor
+    #    arg("goal_position", "base/samples/RigidBodyState"). # should be travConfig.stepHeight above the floor
+    #    returns("int").
+    #    doc("Triggers planning of a new path")
+
+    #operation("triggerPathPlanning2").
+    #    arg("goal_position", "base/samples/RigidBodyState"). # should be travConfig.stepHeight above the floor
+    #    returns("int").
+    #    doc("Triggers planning of a new path")
+
     operation("triggerPathPlanning").
-        arg("start_position", "base/samples/RigidBodyState"). # should be travConfig.stepHeight above the floor
-        arg("goal_position", "base/samples/RigidBodyState"). # should be travConfig.stepHeight above the floor
-        returns("int").
-        doc("Triggers planning of a new path")
-
-    operation("triggerPathPlanning2").
-        arg("goal_position", "base/samples/RigidBodyState"). # should be travConfig.stepHeight above the floor
-        returns("int").
-        doc("Triggers planning of a new path")
-
-    operation("triggerPathPlanningNoArgs").
         returns("int").
         doc("Triggers planning of a new path")
     
