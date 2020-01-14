@@ -48,9 +48,28 @@ int32_t PathPlanner::triggerPathPlanning()
 
     _planning_start.write(start_pose);
     _planning_goal.write(stop_pose);
-    
+
     executePlanning = true;
-    
+
+    return 1;
+}
+
+int32_t PathPlanner::triggerPathPlanningRelative()
+{
+    if(!gotMap)
+        return 0;
+
+    // read start pose from input port
+    _start_pose_samples.read(start_pose);
+    _goal_pose_samples.read(stop_pose);
+
+    stop_pose.setTransform(start_pose.getTransform() * stop_pose.getTransform());
+
+    _planning_start.write(start_pose);
+    _planning_goal.write(stop_pose);
+
+    executePlanning = true;
+
     return 1;
 }
 
@@ -58,7 +77,7 @@ bool PathPlanner::configureHook()
 {
     std::vector<std::string> channels = V3DD::GET_DECLARED_CHANNELS();
     std::vector<std::string> channels_filtered;
-    
+
     for(const std::string& channel : channels)
     {
         //check if it contains ugv
@@ -67,21 +86,21 @@ bool PathPlanner::configureHook()
             channels_filtered.push_back(channel);
         }
     }
-    
+
     V3DD::CONFIGURE_DEBUG_DRAWINGS_USE_PORT(this, channels_filtered);
 
     Eigen::Affine3d mls2Ground(Eigen::Translation3d(_gridOffset.rvalue()));
 
     planner.reset(new Planner(_primConfig.get(), _travConfig.get(), _mobilityConfig.get(), _plannerConfig.get(), mls2Ground));
-    
-    
-    planner->setTravMapCallback([&] () 
+
+
+    planner->setTravMapCallback([&] ()
     {
         //this callback will be called whenever the planner has generated a new travmap.
     });
-    
+
     V3DD::FLUSH_DRAWINGS();
-    
+
     if (! PathPlannerBase::configureHook())
         return false;
     return true;
@@ -91,7 +110,7 @@ bool PathPlanner::startHook()
 {
     if (! PathPlannerBase::startHook())
         return false;
-    
+
     initalPatchAdded = false;
     executePlanning = false;
     gotMap = false;
@@ -100,7 +119,7 @@ bool PathPlanner::startHook()
 
 void PathPlanner::updateHook()
 {
-    
+
     envire::core::SpatioTemporal<maps::grid::MLSMapKalman> map;
     auto map_status = _map.readNewest(map, false);
 
@@ -114,8 +133,8 @@ void PathPlanner::updateHook()
         map.data.translate(_gridOffset.rvalue());
         planner->updateMap(map.getData());
         setIfNotSet(GOT_MAP);
-    } 
-    
+    }
+
     if(executePlanning)
     {
         if(!initalPatchAdded)
@@ -123,20 +142,20 @@ void PathPlanner::updateHook()
             planner->setInitialPatch(start_pose.getTransform(), _initialPatchRadius.get());
             initalPatchAdded = true;
         }
-        
+
         setIfNotSet(PLANNING);
         std::vector<base::Trajectory> trajectory2D;
         std::vector<base::Trajectory> trajectory3D;
-        
-        
+
+
         Planner::PLANNING_RESULT res = planner->plan(_maxTime.value(), start_pose, stop_pose, trajectory2D, trajectory3D, _dumpOnError.get(), _dumpOnSuccess.get());
         switch(res)
         {
-            case Planner::FOUND_SOLUTION:                      
+            case Planner::FOUND_SOLUTION:
                 _trajectory2D.write(trajectory2D);
                 _trajectory3D.write(trajectory3D);
                 setIfNotSet(FOUND_SOLUTION);
-                break;      
+                break;
             case Planner::GOAL_INVALID:
                 setIfNotSet(ugv_nav4d::PathPlannerBase::GOAL_INVALID);
                 break;
@@ -153,10 +172,10 @@ void PathPlanner::updateHook()
                 setIfNotSet(ugv_nav4d::PathPlannerBase::NO_MAP);
                 break;
         }
-        
+
         executePlanning = false;
     }
-    
+
     V3DD::FLUSH_DRAWINGS();
     PathPlannerBase::updateHook();
 }
