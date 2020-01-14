@@ -45,8 +45,6 @@ namespace ugv_nav4d{
          * 
          */
         virtual boost::int32_t triggerPathPlanning();
-        
-        Eigen::Vector3d gridTranslation() const;
 
     public:
         /** TaskContext constructor for PathPlanner

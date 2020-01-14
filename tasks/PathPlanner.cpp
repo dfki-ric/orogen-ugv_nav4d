@@ -70,9 +70,7 @@ bool PathPlanner::configureHook()
     
     V3DD::CONFIGURE_DEBUG_DRAWINGS_USE_PORT(this, channels_filtered);
 
-    const auto& translation = _gridOffset.rvalue().translation;
-    Eigen::Affine3d mls2Ground(Eigen::Affine3d::Identity());
-    mls2Ground.translation() = Eigen::Vector3d(translation[0], translation[1], 0);
+    Eigen::Affine3d mls2Ground(Eigen::Translation3d(_gridOffset.rvalue()));
 
     planner.reset(new Planner(_primConfig.get(), _travConfig.get(), _mobilityConfig.get(), _plannerConfig.get(), mls2Ground));
     
@@ -113,7 +111,7 @@ void PathPlanner::updateHook()
     } else if(map_status == RTT::NewData)
     {
         gotMap = true;
-        map.data.translate(gridTranslation());
+        map.data.translate(_gridOffset.rvalue());
         planner->updateMap(map.getData());
         setIfNotSet(GOT_MAP);
     } 
@@ -174,10 +172,4 @@ void PathPlanner::cleanupHook()
 {
     planner.reset();
     PathPlannerBase::cleanupHook();
-}
-
-Eigen::Vector3d PathPlanner::gridTranslation() const
-{
-    const auto& translation = _gridOffset.rvalue().translation;
-    return Eigen::Vector3d(translation[0], translation[1], 0.);
 }
