@@ -12,6 +12,10 @@
 
 using namespace ugv_nav4d;
 
+using Eigen::Vector3d;
+using Eigen::Affine3d;
+using Eigen::Translation3d;
+
 PathPlanner::PathPlanner(std::string const& name)
     : PathPlannerBase(name), planner(nullptr)
 {
@@ -33,42 +37,7 @@ void PathPlanner::setIfNotSet(const PathPlannerBase::States& newState)
 }
 
 
-int32_t PathPlanner::triggerPathPlanning(const base::samples::RigidBodyState& start_position, const base::samples::RigidBodyState& goal_position)
-{
-    if(!gotMap)
-        return 0;
-
-    start_pose = start_position;
-    stop_pose = goal_position;
-
-    
-    _planning_start.write(start_position);
-    _planning_goal.write(goal_position);
-    
-    executePlanning = true;
-    
-    return 1;
-}
-
-int32_t PathPlanner::triggerPathPlanning2(const base::samples::RigidBodyState& goal_position)
-{
-    if(!gotMap)
-        return 0;
-
-    // read start pose from input port
-    _start_pose_samples.read(start_pose);
-
-    stop_pose = goal_position;
-    
-    _planning_start.write(start_pose);
-    _planning_goal.write(goal_position);
-    
-    executePlanning = true;
-    
-    return 1;
-}
-
-int32_t PathPlanner::triggerPathPlanningNoArgs()
+int32_t PathPlanner::triggerPathPlanning()
 {
     if(!gotMap)
         return 0;
@@ -101,7 +70,9 @@ bool PathPlanner::configureHook()
     
     V3DD::CONFIGURE_DEBUG_DRAWINGS_USE_PORT(this, channels_filtered);
 
-    planner.reset(new Planner(_primConfig.get(), _travConfig.get(), _mobilityConfig.get(), _plannerConfig.get()));
+    Eigen::Affine3d mls2Ground(Eigen::Translation3d(_gridOffset.rvalue()));
+
+    planner.reset(new Planner(_primConfig.get(), _travConfig.get(), _mobilityConfig.get(), _plannerConfig.get(), mls2Ground));
     
     
     planner->setTravMapCallback([&] () 
@@ -140,6 +111,7 @@ void PathPlanner::updateHook()
     } else if(map_status == RTT::NewData)
     {
         gotMap = true;
+        map.data.translate(_gridOffset.rvalue());
         planner->updateMap(map.getData());
         setIfNotSet(GOT_MAP);
     } 
@@ -157,16 +129,14 @@ void PathPlanner::updateHook()
         std::vector<base::Trajectory> trajectory3D;
         
         
-        Planner::PLANNING_RESULT res = planner->plan(_maxTime.value(), start_pose, stop_pose, trajectory2D, trajectory3D, _dumpOnError.get());
-
+        Planner::PLANNING_RESULT res = planner->plan(_maxTime.value(), start_pose, stop_pose, trajectory2D, trajectory3D, _dumpOnError.get(), _dumpOnSuccess.get());
         switch(res)
         {
-            case Planner::FOUND_SOLUTION:
+            case Planner::FOUND_SOLUTION:                      
                 _trajectory2D.write(trajectory2D);
                 _trajectory3D.write(trajectory3D);
                 setIfNotSet(FOUND_SOLUTION);
-                break;
-            
+                break;      
             case Planner::GOAL_INVALID:
                 setIfNotSet(ugv_nav4d::PathPlannerBase::GOAL_INVALID);
                 break;

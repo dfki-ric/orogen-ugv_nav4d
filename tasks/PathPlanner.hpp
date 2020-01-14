@@ -2,6 +2,7 @@
 
 #include "ugv_nav4d/PathPlannerBase.hpp"
 #include <memory>
+#include <Eigen/Core>
 
 namespace ugv_nav4d{
 
@@ -43,11 +44,7 @@ namespace ugv_nav4d{
          * @param goal Goal position of the robot body in map frame (this should be config.stepHeight above ground)
          * 
          */
-        virtual boost::int32_t triggerPathPlanning(::base::samples::RigidBodyState const & start, ::base::samples::RigidBodyState const & goal);
-        
-        virtual boost::int32_t triggerPathPlanning2(::base::samples::RigidBodyState const & goal);
-        
-        virtual boost::int32_t triggerPathPlanningNoArgs();
+        virtual boost::int32_t triggerPathPlanning();
 
     public:
         /** TaskContext constructor for PathPlanner
