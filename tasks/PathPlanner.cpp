@@ -15,6 +15,7 @@ using namespace ugv_nav4d;
 using Eigen::Vector3d;
 using Eigen::Affine3d;
 using Eigen::Translation3d;
+using maps::grid::TraversabilityNodeBase;
 
 PathPlanner::PathPlanner(std::string const& name)
     : PathPlannerBase(name), planner(nullptr)
@@ -97,6 +98,7 @@ bool PathPlanner::configureHook()
     planner->setTravMapCallback([&] ()
     {
         //this callback will be called whenever the planner has generated a new travmap.
+        _tr_map.write(planner->getTraversabilityMap().copyCast<TraversabilityNodeBase*>());
     });
 
     V3DD::FLUSH_DRAWINGS();
