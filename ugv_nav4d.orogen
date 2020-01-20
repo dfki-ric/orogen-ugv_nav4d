@@ -40,7 +40,7 @@ task_context "PathPlanner" do
 
     #FIXME output of the tr map is not that easy outside of project ENTERN as several
     #      bug fixes have not been merged to orogen and the opaque_autogen does not work them on pointers.
-    output_port "tr_map", spatio_temporal('/maps/grid/TraversabilityMap3dB')
+    output_port "tr_map", spatio_temporal('/maps/grid/TraversabilityBaseMap3d')
 
     output_port "planning_start", "base/samples/RigidBodyState"
     output_port "planning_goal", "base/samples/RigidBodyState"
