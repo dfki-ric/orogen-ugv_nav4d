@@ -16,6 +16,8 @@ using Eigen::Vector3d;
 using Eigen::Affine3d;
 using Eigen::Translation3d;
 using maps::grid::TraversabilityNodeBase;
+using maps::grid::TraversabilityBaseMap3d;
+using envire::core::SpatioTemporal;
 
 PathPlanner::PathPlanner(std::string const& name)
     : PathPlannerBase(name), planner(nullptr)
@@ -98,7 +100,9 @@ bool PathPlanner::configureHook()
     planner->setTravMapCallback([&] ()
     {
         //this callback will be called whenever the planner has generated a new travmap.
-        _tr_map.write(planner->getTraversabilityMap().copyCast<TraversabilityNodeBase*>());
+        SpatioTemporal<TraversabilityBaseMap3d> st(planner->getTraversabilityMap().copyCast<TraversabilityNodeBase*>());
+        st.setFrameID("slam");
+        _tr_map.write(st);
     });
 
     V3DD::FLUSH_DRAWINGS();
