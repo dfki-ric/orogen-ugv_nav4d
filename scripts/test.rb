@@ -11,11 +11,11 @@ Orocos.run 'ugv_nav4d::MapLoader' => 'loader',
   loader = Orocos.name_service.get 'loader'
   planner = Orocos.name_service.get 'planner'
 
-  loader.path = "/home/arne/git/transfit/planning/ugv_nav4d/test_data/test_area2.ply"
+  loader.path = "#{ENV['AUTOPROJ_CURRENT_ROOT']}/planning/ugv_nav4d/test_data/test_area2.ply"
   loader.gridResolution = 0.1 # this has to be the same as planner.travConfig.gridResolution
   loader.gapSize = 0.2
   
-  planner.apply_conf_file("/home/arne/git/transfit/planning/orogen/ugv_nav4d/scripts/config.yml", ["default"])
+  planner.apply_conf_file("#{ENV['AUTOPROJ_CURRENT_ROOT']}/planning/orogen/ugv_nav4d/scripts/config.yml", ["default"])
 
   
   loader.map.connect_to planner.map
