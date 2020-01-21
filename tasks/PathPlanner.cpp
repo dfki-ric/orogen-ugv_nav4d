@@ -154,6 +154,11 @@ void PathPlanner::updateHook()
         std::vector<base::Trajectory> trajectory3D;
 
 
+        Eigen::Vector3d contact_point;
+        const auto translated_end = stop_pose.position() + _gridOffset.rvalue();
+        map.data.getClosestContactPoint(translated_end, contact_point);
+        stop_pose.position().z() = contact_point.z();
+
         Planner::PLANNING_RESULT res = planner->plan(_maxTime.value(), start_pose, stop_pose, trajectory2D, trajectory3D, _dumpOnError.get(), _dumpOnSuccess.get());
         switch(res)
         {
