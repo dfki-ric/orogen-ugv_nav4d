@@ -49,6 +49,8 @@ int32_t PathPlanner::triggerPathPlanning()
     _start_pose_samples.read(start_pose);
     _goal_pose_samples.read(stop_pose);
 
+    
+
     _planning_start.write(start_pose);
     _planning_goal.write(stop_pose);
 
@@ -100,8 +102,10 @@ bool PathPlanner::configureHook()
     planner->setTravMapCallback([&] ()
     {
         //this callback will be called whenever the planner has generated a new travmap.
+
         SpatioTemporal<TraversabilityBaseMap3d> st(planner->getTraversabilityMap().copyCast<TraversabilityNodeBase*>());
-        st.setFrameID("slam");
+        // planner has static transformation to world by [10, 10, 0]
+        st.setFrameID("planner");
         _tr_map.write(st);
     });
 
