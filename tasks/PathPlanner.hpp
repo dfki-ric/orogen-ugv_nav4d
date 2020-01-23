@@ -44,7 +44,8 @@ namespace ugv_nav4d{
          * @param goal Goal position of the robot body in map frame (this should be config.stepHeight above ground)
          *
          */
-        virtual boost::int32_t triggerPathPlanning();
+        virtual boost::int32_t triggerPathPlanning(::base::samples::RigidBodyState const & start, ::base::samples::RigidBodyState const & goal);
+        virtual boost::int32_t triggerPathPlanningAbsolute();
         virtual boost::int32_t triggerPathPlanningRelative();
 
     public:

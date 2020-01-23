@@ -39,8 +39,24 @@ void PathPlanner::setIfNotSet(const PathPlannerBase::States& newState)
         state(newState);
 }
 
+int32_t PathPlanner::triggerPathPlanning(const base::samples::RigidBodyState& start_position, const base::samples::RigidBodyState& goal_position)
+{
+    if(!gotMap)
+        return 0;
 
-int32_t PathPlanner::triggerPathPlanning()
+    start_pose = start_position;
+    stop_pose = goal_position;
+
+    
+    _planning_start.write(start_position);
+    _planning_goal.write(goal_position);
+    
+    executePlanning = true;
+    
+    return 1;
+}
+
+int32_t PathPlanner::triggerPathPlanningAbsolute()
 {
     if(!gotMap)
         return 0;

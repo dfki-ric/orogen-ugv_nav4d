@@ -51,8 +51,14 @@ task_context "PathPlanner" do
     input_port "goal_pose_samples", "base/samples/RigidBodyState"
 
     operation("triggerPathPlanning").
+        arg("start_position", "base/samples/RigidBodyState"). # should be travConfig.stepHeight above the floor
+        arg("goal_position", "base/samples/RigidBodyState"). # should be travConfig.stepHeight above the floor
         returns("int").
         doc("Triggers planning of a new path")
+
+    operation("triggerPathPlanningAbsolute").
+        returns("int").
+        doc("Triggers planning of a new path, reading the start and end positions from the input ports.")
 
     operation("triggerPathPlanningRelative").
         returns("int").
