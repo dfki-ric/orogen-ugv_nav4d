@@ -1,13 +1,22 @@
 /* Generated from orogen/lib/orogen/templates/tasks/Task.cpp */
 
 #include "AreaExploration.hpp"
+#include "ugv_nav4dTypes.hpp"
 #include <ugv_nav4d/AreaExplorer.hpp>
 #include <ugv_nav4d/FrontierGenerator.hpp>
 #include <vizkit3d_debug_drawings/DebugDrawing.hpp>
+#include <envire_core/items/SpatioTemporal.hpp>
 
 #include <maps/operations/CoverageMapGeneration.hpp>
 
+#include <boost/archive/binary_iarchive.hpp>
+#include <boost/archive/binary_oarchive.hpp>
+
 using namespace ugv_nav4d;
+
+using maps::grid::TraversabilityNodeBase;
+using maps::grid::TraversabilityBaseMap3d;
+using envire::core::SpatioTemporal;
 
 AreaExploration::AreaExploration(std::string const& name)
     : AreaExplorationBase(name)
@@ -136,13 +145,12 @@ void AreaExploration::updateHook()
              state(AREA_EXPLORED);
         }
         
-        {
-            envire::core::SpatioTemporal<maps::grid::TraversabilityBaseMap3d> trMap;
-            trMap.frame_id = "AreaExploration";
-            trMap.data = frontGen->getTraversabilityMap().copyCast<maps::grid::TraversabilityNodeBase *>();
-//             _tr_map.write(trMap);
-        }
         
+        SpatioTemporal<TraversabilityBaseMap3d> st(frontGen->getTraversabilityMap().copyCast<TraversabilityNodeBase*>());
+        // planner has static transformation to world by [10, 10, 0]
+        st.setFrameID("planner");
+        _tr_map.write(st);
+                    
         generateFrontiers = false;
         
         V3DD::FLUSH_DRAWINGS();

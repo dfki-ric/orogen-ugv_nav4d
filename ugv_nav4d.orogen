@@ -38,8 +38,6 @@ task_context "PathPlanner" do
     output_port "trajectory2D", "std::vector<base/Trajectory>"
     output_port "trajectory3D", "std::vector<base/Trajectory>"
 
-    #FIXME output of the tr map is not that easy outside of project ENTERN as several
-    #      bug fixes have not been merged to orogen and the opaque_autogen does not work them on pointers.
     output_port "tr_map", spatio_temporal('/maps/grid/TraversabilityBaseMap3d')
 
     output_port "planning_start", "base/samples/RigidBodyState"
@@ -100,7 +98,7 @@ task_context "AreaExploration" do
     output_port('goal_out_best', 'base/samples/RigidBodyState').
         doc("Just the first (best) goal of the goal_out list.")
 
-#    output_port "tr_map", spatio_temporal('/maps/grid/TraversabilityBaseMap3d')
+    output_port "tr_map", spatio_temporal('/maps/grid/TraversabilityBaseMap3d')
 
     output_port "coverage", "/maps/grid/MLSMapBase"
 
