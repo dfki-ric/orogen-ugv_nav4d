@@ -45,8 +45,6 @@ namespace ugv_nav4d{
          *
          */
         virtual boost::int32_t triggerPathPlanning(::base::samples::RigidBodyState const & start, ::base::samples::RigidBodyState const & goal);
-        virtual boost::int32_t triggerPathPlanningAbsolute();
-        virtual boost::int32_t triggerPathPlanningRelative();
 
     public:
         /** TaskContext constructor for PathPlanner
