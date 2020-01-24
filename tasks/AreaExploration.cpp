@@ -91,6 +91,7 @@ void AreaExploration::updateHook()
     if(_map.readNewest(map, false) == RTT::NewData)
     {
         mapValid = true;
+        map.data.translate(_gridOffset.rvalue());
         frontGen->updateMap(map.data, coverage ? &coverage->getCoverage() : nullptr);
         if(coverage)
             coverage->setFrame(frontGen->getTraversabilityMap());
@@ -105,7 +106,8 @@ void AreaExploration::updateHook()
         }
         poseValid = true;
         
-        if(coverage && mapValid && (curPose.position - previousPose.position).norm() > _coverageUpdateDistance.get())
+        if(coverage && mapValid && (curPose.position - previousPose.position).norm() > 
+        _coverageUpdateDistance.get())
         {
             std::cout << "Adding coverage at " << curPose.position.transpose() << '\n';
             // TODO AngleSegment and orientation are ignored at the moment

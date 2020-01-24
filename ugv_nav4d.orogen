@@ -87,6 +87,9 @@ task_context "AreaExploration" do
     property("coverageRadius", "double", 1.0)
     property("coverageUpdateDistance", "double", 0.05)
 
+    # offset vector which translates mls to positive area
+    property "gridOffset", "/base/Vector3d"
+
     operation("clearPlannerMap").
         doc("Clears the internal exploration map. All obstacles will be readded by receiving the next trav map.")
 
@@ -114,6 +117,7 @@ task_context "AreaExploration" do
     runtime_states :NO_MAP,
         :NO_POSE,
         :PLANNING,
+        :EXPLORING,
         :AREA_EXPLORED,
         :GOALS_GENERATED
 
