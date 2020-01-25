@@ -7,6 +7,8 @@
 #include <vizkit3d_debug_drawings/DebugDrawing.hpp>
 #include <envire_core/items/SpatioTemporal.hpp>
 
+#include <orocos_cpp/PkgConfigRegistry.hpp>
+
 #include <maps/operations/CoverageMapGeneration.hpp>
 
 #include <boost/archive/binary_iarchive.hpp>
@@ -34,8 +36,21 @@ AreaExploration::~AreaExploration()
 
 void AreaExploration::calculateGoals(::ugv_nav4d::OrientedBoxConfig const & area)
 {
-    generateFrontiers = true;
-    this->area = area;
+    if (!explorationMode) {
+        generateFrontiers = true;
+        this->area = area;
+    }
+}
+
+void AreaExploration::startExploring()
+{
+    base::Vector3d center(0.0,0.0,0.0);
+    base::Vector3d dimensions(20.0,20.0,10.0);
+    base::Orientation orientation(1.0,0.0,0.0,0.0);
+    area = OrientedBoxConfig{center, dimensions, orientation};
+
+    std::cout << "Area set. Starting exploration mode ..." << std::endl;
+    explorationMode = true;
 }
 
 void AreaExploration::clearPlannerMap()
@@ -68,6 +83,10 @@ bool AreaExploration::configureHook()
 
     V3DD::FLUSH_DRAWINGS();
     
+    //const std::vector<std::string> names{"ugv_nav4d"};
+    //orocos_cpp::PkgConfigRegistryPtr pkgConfig = orocos_cpp::PkgConfigRegistry::initialize(names, false);
+    //typeRegistry = orocos_cpp::TypeRegistry(pkgConfig);
+
     if (! AreaExplorationBase::configureHook())
         return false;
     return true;
@@ -77,6 +96,7 @@ bool AreaExploration::startHook()
     poseValid = false;
     mapValid = false;
     
+    explorationMode = false;
     generateFrontiers = false;
     
     if (! AreaExplorationBase::startHook())
@@ -85,8 +105,9 @@ bool AreaExploration::startHook()
 }
 void AreaExploration::updateHook()
 {
-   
     AreaExplorationBase::updateHook();
+
+    Eigen::Affine3d mls2Planner(Eigen::Translation3d(_gridOffset.rvalue()));
 
     if(_map.readNewest(map, false) == RTT::NewData)
     {
@@ -99,6 +120,9 @@ void AreaExploration::updateHook()
 
     if(_pose_samples.readNewest(curPose, false) == RTT::NewData)
     {
+        // translate curPose
+        curPose.setTransform(mls2Planner * curPose.getTransform());
+
         if(!poseValid)
         {
             explorer->setInitialPatch(curPose.getTransform(), _initialPatchRadius.get());
@@ -125,37 +149,68 @@ void AreaExploration::updateHook()
     {
         state(ugv_nav4d::AreaExplorationBase::NO_MAP);
     }
-    else if(generateFrontiers)
-    {
-        state(PLANNING);
-        
-        std::vector<base::samples::RigidBodyState> outFrontiers;
-        if(explorer->getFrontiers(curPose.position, area, outFrontiers))
+    else {
+        if (!explorationMode && !generateFrontiers) 
         {
-            state(GOALS_GENERATED);
-            
-            for(auto &f : outFrontiers)
+            state(GOT_MAP_AND_POSE);
+        }
+
+        if(explorationMode) {
+
+            if (state() == EXPLORING && (curPose.position - latestGoal.position).norm() < _goalReachedThresholdDistance.get())
             {
-                //convert to ground frame
-                f.position +=  f.orientation * Eigen::Vector3d(0,0, -_travConfig.get().distToGround);
+                std::cout << "Goal was reached. Starting to compute frontiers and select new goal." << std::endl;
+                // goal was reached
+                generateFrontiers = true;
+            } else if (state() == GOT_MAP_AND_POSE) {
+                std::cout << "Starting to compute frontierts and select first goal." << std::endl;
+                generateFrontiers = true;
+            }
+        }
+        if(generateFrontiers) {
+            state(PLANNING);
+            
+            std::vector<base::samples::RigidBodyState> outFrontiers;
+            if(explorer->getFrontiers(curPose.position, area, outFrontiers))
+            {
+                state(GOALS_GENERATED);
+                
+                for(auto &f : outFrontiers)
+                {
+                    //convert to ground frame
+                    f.position +=  f.orientation * Eigen::Vector3d(0,0, -_travConfig.get().distToGround);
+
+                    f.setTransform(mls2Planner.inverse() * f.getTransform());
+                }
+                
+                _goals_out.write(outFrontiers);
+
+                if (explorationMode) {
+                    _goal_out_best.write(outFrontiers.front());
+                    latestGoal = outFrontiers.front();
+                    state(EXPLORING);
+                }
+            }
+            else
+            {
+                std::cout << "area explored." << std::endl;
+                state(AREA_EXPLORED);
+                if (explorationMode) {
+                    explorationMode = false;
+                }
             }
             
-            _goals_out.write(outFrontiers);
+            std::cout << "Write updated travMap to output." << std::endl;
+            SpatioTemporal<TraversabilityBaseMap3d> st(frontGen->getTraversabilityMap().copyCast<TraversabilityNodeBase*>());
+            // planner has static transformation to world by [10, 10, 0]
+            st.setFrameID("planner");
+            _tr_map.write(st);
+                        
+            generateFrontiers = false;
+            
+            V3DD::FLUSH_DRAWINGS();
         }
-        else
-        {
-             state(AREA_EXPLORED);
-        }
         
-        
-        SpatioTemporal<TraversabilityBaseMap3d> st(frontGen->getTraversabilityMap().copyCast<TraversabilityNodeBase*>());
-        // planner has static transformation to world by [10, 10, 0]
-        st.setFrameID("planner");
-        _tr_map.write(st);
-                    
-        generateFrontiers = false;
-        
-        V3DD::FLUSH_DRAWINGS();
     }
 }
 void AreaExploration::errorHook()

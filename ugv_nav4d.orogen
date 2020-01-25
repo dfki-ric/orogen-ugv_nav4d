@@ -43,7 +43,7 @@ task_context "PathPlanner" do
     output_port "planning_start", "base/samples/RigidBodyState"
     output_port "planning_goal", "base/samples/RigidBodyState"
 
-    dynamic_output_port /^debug_/, "/boost/shared_ptr</vizkit3dDebugDrawings/CommandBuffer>"
+    dynamic_output_port /^debug_ugv_nav4d/, "/boost/shared_ptr</vizkit3dDebugDrawings/CommandBuffer>"
 
     input_port "start_pose_samples", "base/samples/RigidBodyState"
 
@@ -81,6 +81,8 @@ task_context "AreaExploration" do
     property("coverageRadius", "double", 1.0)
     property("coverageUpdateDistance", "double", 0.05)
 
+    property("goalReachedThresholdDistance", "double", 0.1)
+
     # offset vector which translates mls to positive area
     property "gridOffset", "/base/Vector3d"
 
@@ -88,6 +90,13 @@ task_context "AreaExploration" do
         doc("Clears the internal exploration map. All obstacles will be readded by receiving the next trav map.")
 
     input_port "map", spatio_temporal('/maps/grid/MLSMapKalman')
+
+    input_port("pose_samples", "base/samples/RigidBodyState").
+        doc "Robot pose in traversability frame"
+
+    input_port("planner_state", "int")
+
+    input_port("area", "ugv_nav4d/OrientedBoxConfig")
 
     output_port('goals_out', 'std/vector<base/samples/RigidBodyState>').
         doc "Calculated goal, using x and y"
@@ -99,17 +108,21 @@ task_context "AreaExploration" do
 
     output_port "coverage", "/maps/grid/MLSMapBase"
 
-    input_port("pose_samples", "base/samples/RigidBodyState").
-        doc "Robot pose in traversability frame"
+    dynamic_output_port /^debug_area_explorer/, "/boost/shared_ptr</vizkit3dDebugDrawings/CommandBuffer>"
 
     operation("calculateGoals").
         arg("area", "ugv_nav4d::OrientedBoxConfig").
         doc("Triggers the calculation of a new list of goals")
 
-    port_driven 'map', 'pose_samples'
+
+    operation("startExploring").
+        doc("Starts the AreaExploration-Mode")
+
+    port_driven 'map', 'pose_samples', 'planner_state', 'area'
 
     runtime_states :NO_MAP,
         :NO_POSE,
+        :GOT_MAP_AND_POSE,
         :PLANNING,
         :EXPLORING,
         :AREA_EXPLORED,
