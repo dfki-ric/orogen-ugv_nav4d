@@ -48,7 +48,6 @@ task_context "PathPlanner" do
     dynamic_output_port /^debug_/, "/boost/shared_ptr</vizkit3dDebugDrawings/CommandBuffer>"
 
     input_port "start_pose_samples", "base/samples/RigidBodyState"
-    input_port "goal_pose_samples", "base/samples/RigidBodyState"
 
     operation("triggerPathPlanning").
         arg("start_position", "base/samples/RigidBodyState"). # should be travConfig.stepHeight above the floor
@@ -56,13 +55,8 @@ task_context "PathPlanner" do
         returns("int").
         doc("Triggers planning of a new path")
 
-    operation("triggerPathPlanningAbsolute").
-        returns("int").
-        doc("Triggers planning of a new path, reading the start and end positions from the input ports.")
-
-    operation("triggerPathPlanningRelative").
-        returns("int").
-        doc("Triggers planning of a new path with Relative Target")
+    input_port "goal_pose_relative", "base/samples/RigidBodyState"
+    input_port "goal_pose_absolute", "base/samples/RigidBodyState"
 
     runtime_states :NO_MAP,
         :GOT_MAP,

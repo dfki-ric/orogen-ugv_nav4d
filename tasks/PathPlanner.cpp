@@ -46,51 +46,12 @@ int32_t PathPlanner::triggerPathPlanning(const base::samples::RigidBodyState& st
 
     start_pose = start_position;
     stop_pose = goal_position;
-
-    
+   
     _planning_start.write(start_position);
     _planning_goal.write(goal_position);
     
     executePlanning = true;
     
-    return 1;
-}
-
-int32_t PathPlanner::triggerPathPlanningAbsolute()
-{
-    if(!gotMap)
-        return 0;
-
-    // read start pose from input port
-    _start_pose_samples.read(start_pose);
-    _goal_pose_samples.read(stop_pose);
-
-    
-
-    _planning_start.write(start_pose);
-    _planning_goal.write(stop_pose);
-
-    executePlanning = true;
-
-    return 1;
-}
-
-int32_t PathPlanner::triggerPathPlanningRelative()
-{
-    if(!gotMap)
-        return 0;
-
-    // read start pose from input port
-    _start_pose_samples.read(start_pose);
-    _goal_pose_samples.read(stop_pose);
-
-    stop_pose.setTransform(start_pose.getTransform() * stop_pose.getTransform());
-
-    _planning_start.write(start_pose);
-    _planning_goal.write(stop_pose);
-
-    executePlanning = true;
-
     return 1;
 }
 
@@ -161,8 +122,27 @@ void PathPlanner::updateHook()
         setIfNotSet(GOT_MAP);
     }
 
+    // start planning if there is a new relative goal in port
+    if (_goal_pose_relative.readNewest(stop_pose, false) == RTT::NewData) {
+        _start_pose_samples.read(start_pose);
+        // transform stop pose to slam frame
+        stop_pose.setTransform(start_pose.getTransform() * stop_pose.getTransform());
+
+        executePlanning = true;
+    }
+
+    // start planning if there is a new absolute goal in port
+    if (_goal_pose_absolute.readNewest(stop_pose, false) == RTT::NewData) {
+        _start_pose_samples.read(start_pose);
+       
+        executePlanning = true;
+    }
+
     if(executePlanning)
     {
+        _planning_start.write(start_pose);
+        _planning_goal.write(stop_pose);
+
         if(!initalPatchAdded)
         {
             planner->setInitialPatch(start_pose.getTransform(), _initialPatchRadius.get());
@@ -173,7 +153,7 @@ void PathPlanner::updateHook()
         std::vector<base::Trajectory> trajectory2D;
         std::vector<base::Trajectory> trajectory3D;
 
-
+        // get z-coords from mls and set in in stop_pose.position
         Eigen::Vector3d contact_point;
         const auto translated_end = stop_pose.position + _gridOffset.rvalue();
         map.data.getClosestContactPoint(translated_end, contact_point);
