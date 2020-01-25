@@ -65,7 +65,7 @@ bool AreaExploration::configureHook()
     for(const std::string& channel : channels)
     {
         //check if it contains ugv
-        if(channel.find("area_explore") != std::string::npos)
+        if(channel.find("area_explorer") != std::string::npos)
         {
             channels_filtered.push_back(channel);
         }
@@ -125,6 +125,7 @@ void AreaExploration::updateHook()
 
         if(!poseValid)
         {
+            std::cout << "Setting initial patch for area explorer" << std::endl;
             explorer->setInitialPatch(curPose.getTransform(), _initialPatchRadius.get());
             previousPose = curPose;
         }
@@ -140,6 +141,22 @@ void AreaExploration::updateHook()
             previousPose = curPose;
         }
     }
+
+    boost::int32_t planner_state;
+    if (_planner_state.readNewest(planner_state, false == RTT::NewData)) {
+        if (planner_state == 0 && state() == EXPLORING) { // BAG_GOAL
+            if (currentGoals.size() > 1) { // there is an other goal than the latest.
+                std::cout << "Planner says that current best goal is invalid. Writing next best goal on output." << std::endl;
+                currentGoals.erase(currentGoals.begin(), currentGoals.begin() + 1); // erase latestBestGoal
+                latestBestGoal = currentGoals.front();
+                _goal_out_best.write(latestBestGoal);
+            } else {
+                std::cout << "There are no other goals. Stopping AreaExploration" << std::endl;
+                generateFrontiers = false;
+                explorationMode = false;
+            }
+        }
+    } 
     
     if(!poseValid)
     {
@@ -155,9 +172,8 @@ void AreaExploration::updateHook()
             state(GOT_MAP_AND_POSE);
         }
 
-        if(explorationMode) {
-
-            if (state() == EXPLORING && (curPose.position - latestGoal.position).norm() < _goalReachedThresholdDistance.get())
+        if(explorationMode) {           
+            if (state() == EXPLORING && (curPose.position - latestBestGoal.position).norm() < _goalReachedThresholdDistance.get())
             {
                 std::cout << "Goal was reached. Starting to compute frontiers and select new goal." << std::endl;
                 // goal was reached
@@ -167,6 +183,7 @@ void AreaExploration::updateHook()
                 generateFrontiers = true;
             }
         }
+
         if(generateFrontiers) {
             state(PLANNING);
             
@@ -186,8 +203,9 @@ void AreaExploration::updateHook()
                 _goals_out.write(outFrontiers);
 
                 if (explorationMode) {
-                    _goal_out_best.write(outFrontiers.front());
-                    latestGoal = outFrontiers.front();
+                    currentGoals = outFrontiers;
+                    latestBestGoal = currentGoals.front();
+                    _goal_out_best.write(latestBestGoal);
                     state(EXPLORING);
                 }
             }
@@ -210,7 +228,7 @@ void AreaExploration::updateHook()
             
             V3DD::FLUSH_DRAWINGS();
         }
-        
+
     }
 }
 void AreaExploration::errorHook()

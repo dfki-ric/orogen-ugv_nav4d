@@ -30,7 +30,8 @@ namespace ugv_nav4d{
         std::shared_ptr<maps::operations::CoverageTracker> coverage;
 
         envire::core::SpatioTemporal<maps::grid::MLSMapKalman> map;
-        base::samples::RigidBodyState curPose, previousPose, latestGoal;
+        base::samples::RigidBodyState curPose, previousPose, latestBestGoal;
+        std::vector<base::samples::RigidBodyState> currentGoals;
         bool poseValid;
         bool mapValid;
         
