@@ -31,6 +31,7 @@ namespace ugv_nav4d{
 
         envire::core::SpatioTemporal<maps::grid::MLSMapKalman> map;
         base::samples::RigidBodyState curPose, previousPose, latestBestGoal;
+        boost::int32_t planner_state;
         std::vector<base::samples::RigidBodyState> currentGoals;
         bool poseValid;
         bool mapValid;
@@ -52,6 +53,10 @@ namespace ugv_nav4d{
         /* Clears the internal exploration map. All obstacles will be readded by receiving the next trav map.
          */
         virtual void clearPlannerMap();
+
+        void setAndOutputBestGoal();
+
+        void outputAllGoals();
 
     public:
         /** TaskContext constructor for AreaExploration

@@ -120,7 +120,7 @@ void AreaExploration::updateHook()
 
     if(_pose_samples.readNewest(curPose, false) == RTT::NewData)
     {
-        // translate curPose
+        // translate curPose to planner frame
         curPose.setTransform(mls2Planner * curPose.getTransform());
 
         if(!poseValid)
@@ -142,18 +142,21 @@ void AreaExploration::updateHook()
         }
     }
 
-    boost::int32_t planner_state;
-    if (_planner_state.readNewest(planner_state, false == RTT::NewData)) {
-        if (planner_state == 0 && state() == EXPLORING) { // BAG_GOAL
-            if (currentGoals.size() > 1) { // there is an other goal than the latest.
-                std::cout << "Planner says that current best goal is invalid. Writing next best goal on output." << std::endl;
-                currentGoals.erase(currentGoals.begin(), currentGoals.begin() + 1); // erase latestBestGoal
-                latestBestGoal = currentGoals.front();
-                _goal_out_best.write(latestBestGoal);
-            } else {
-                std::cout << "There are no other goals. Stopping AreaExploration" << std::endl;
-                generateFrontiers = false;
-                explorationMode = false;
+    boost::int32_t newPlannerState;
+    if (_planner_state.readNewest(newPlannerState, false == RTT::NewData)) {
+        if (newPlannerState != planner_state) {
+            planner_state = newPlannerState;
+            std::cout << "Planner changed to state " << planner_state << std::endl;
+            if ((planner_state == 8 || planner_state == 12) && state() == EXPLORING) { // GOAL_INVALID or NO_SOLUTION while exploring
+                if (currentGoals.size() > 1) { // there is an other goal than the latest.
+                    std::cout << "Planner says that current best goal is invalid. Writing next best goal on output." << std::endl;
+                    currentGoals.erase(currentGoals.begin(), currentGoals.begin() + 1); // erase latestBestGoal
+                    setAndOutputBestGoal();
+                } else {
+                    std::cout << "There are no goals that the planner accepted. Stopping AreaExploration" << std::endl;
+                    generateFrontiers = false;
+                    explorationMode = false;
+                }
             }
         }
     } 
@@ -172,8 +175,9 @@ void AreaExploration::updateHook()
             state(GOT_MAP_AND_POSE);
         }
 
-        if(explorationMode) {           
-            if (state() == EXPLORING && (curPose.position - latestBestGoal.position).norm() < _goalReachedThresholdDistance.get())
+        if(explorationMode) {  
+            //std::cout << "Distance to latest goal = " << (curPose.position - latestBestGoal.position).norm() << std::endl;         
+            if (state() == EXPLORING && (curPose.position.head(2) - latestBestGoal.position.head(2)).norm() < _goalReachedThresholdDistance.get())
             {
                 std::cout << "Goal was reached. Starting to compute frontiers and select new goal." << std::endl;
                 // goal was reached
@@ -196,17 +200,14 @@ void AreaExploration::updateHook()
                 {
                     //convert to ground frame
                     f.position +=  f.orientation * Eigen::Vector3d(0,0, -_travConfig.get().distToGround);
-
-                    f.setTransform(mls2Planner.inverse() * f.getTransform());
                 }
                 
-                _goals_out.write(outFrontiers);
+                currentGoals = outFrontiers;
+                outputAllGoals();
 
                 if (explorationMode) {
-                    currentGoals = outFrontiers;
-                    latestBestGoal = currentGoals.front();
-                    _goal_out_best.write(latestBestGoal);
                     state(EXPLORING);
+                    setAndOutputBestGoal();
                 }
             }
             else
@@ -242,4 +243,25 @@ void AreaExploration::stopHook()
 void AreaExploration::cleanupHook()
 {
     AreaExplorationBase::cleanupHook();
+}
+
+void AreaExploration::setAndOutputBestGoal()
+{
+    Eigen::Affine3d mls2Planner(Eigen::Translation3d(_gridOffset.rvalue()));
+    latestBestGoal = currentGoals.front();
+    base::samples::RigidBodyState bestGoalInMls = latestBestGoal;
+    bestGoalInMls.setTransform(mls2Planner.inverse() * bestGoalInMls.getTransform());
+    _goal_out_best.write(bestGoalInMls);
+
+    std::cout << "New best goal position is " << latestBestGoal.position << " (in planner frame)" << std::endl;
+}
+
+void AreaExploration::outputAllGoals()
+{
+    Eigen::Affine3d mls2Planner(Eigen::Translation3d(_gridOffset.rvalue()));
+    std::vector<base::samples::RigidBodyState> outputGoalsInMls = currentGoals;
+    for(auto &goal : outputGoalsInMls) {
+        goal.setTransform(mls2Planner.inverse() * goal.getTransform());
+    }
+    _goals_out.write(outputGoalsInMls);
 }
