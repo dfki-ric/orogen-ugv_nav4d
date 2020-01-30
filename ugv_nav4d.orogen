@@ -20,6 +20,7 @@ import_types_from "vizkit3d_debug_drawings"
 using_library "ugv_nav4d"
 using_library "trajectory_follower"
 using_library "base-lib"
+using_library "orocos_cpp"
 
 task_context "PathPlanner" do
     needs_configuration

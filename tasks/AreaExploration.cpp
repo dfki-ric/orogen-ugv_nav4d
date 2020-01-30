@@ -83,9 +83,15 @@ bool AreaExploration::configureHook()
 
     V3DD::FLUSH_DRAWINGS();
     
-    //const std::vector<std::string> names{"ugv_nav4d"};
-    //orocos_cpp::PkgConfigRegistryPtr pkgConfig = orocos_cpp::PkgConfigRegistry::initialize(names, false);
-    //typeRegistry = orocos_cpp::TypeRegistry(pkgConfig);
+    const std::vector<std::string> names{"ugv_nav4d"};
+    orocos_cpp::PkgConfigRegistryPtr pkgConfig = orocos_cpp::PkgConfigRegistry::initialize(names, false);
+    orocos_cpp::TypeRegistry typeRegistry = orocos_cpp::TypeRegistry(pkgConfig);
+
+    typeRegistry.getStateID("ugv_nav4d::PathPlanner", "GOAL_INVALID", planner_GOAL_INVALID);
+    typeRegistry.getStateID("ugv_nav4d::PathPlanner", "NO_SOLUTION", planner_NO_SOLUTION);
+
+    std::cout << "PathPlanner state GOAL_INVALID has id " << planner_GOAL_INVALID << std::endl;
+    std::cout << "PathPlanner state NO_SOLUTION has id " << planner_NO_SOLUTION << std::endl;
 
     if (! AreaExplorationBase::configureHook())
         return false;
@@ -147,7 +153,7 @@ void AreaExploration::updateHook()
         if (newPlannerState != planner_state) {
             planner_state = newPlannerState;
             std::cout << "Planner changed to state " << planner_state << std::endl;
-            if ((planner_state == 8 || planner_state == 12) && state() == EXPLORING) { // GOAL_INVALID or NO_SOLUTION while exploring
+            if ((planner_state == planner_GOAL_INVALID || planner_state == planner_NO_SOLUTION) && state() == EXPLORING) { // GOAL_INVALID or NO_SOLUTION while exploring
                 if (currentGoals.size() > 1) { // there is an other goal than the latest.
                     std::cout << "Planner says that current best goal is invalid. Writing next best goal on output." << std::endl;
                     currentGoals.erase(currentGoals.begin(), currentGoals.begin() + 1); // erase latestBestGoal

@@ -40,7 +40,8 @@ namespace ugv_nav4d{
         bool generateFrontiers;
         ugv_nav4d::OrientedBoxConfig area;
 
-        //orocos_cpp::TypeRegistry typeRegistry;
+        unsigned int planner_GOAL_INVALID;
+        unsigned int planner_NO_SOLUTION;
         
         /* Triggers the calculation of a new list of goals
          */
