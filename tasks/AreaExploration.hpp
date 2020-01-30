@@ -42,6 +42,8 @@ namespace ugv_nav4d{
 
         unsigned int planner_GOAL_INVALID;
         unsigned int planner_NO_SOLUTION;
+        unsigned int planner_EXCEPTION;
+        unsigned int planner_START_INVALID;
         
         /* Triggers the calculation of a new list of goals
          */
@@ -49,7 +51,11 @@ namespace ugv_nav4d{
         
         /* Starts the AreaExploration-Mode
         */
-        virtual void startExploring();
+        virtual void startExploring(); 
+        
+        /* Stops the AreaExploration-Mode
+        */
+        virtual void stopExploring();
 
         /* Clears the internal exploration map. All obstacles will be readded by receiving the next trav map.
          */

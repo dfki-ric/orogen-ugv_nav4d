@@ -119,6 +119,9 @@ task_context "AreaExploration" do
     operation("startExploring").
         doc("Starts the AreaExploration-Mode")
 
+    operation("stopExploring").
+        doc("Stops the AreaExploration-Mode")
+
     port_driven 'map', 'pose_samples', 'planner_state', 'area'
 
     runtime_states :NO_MAP,

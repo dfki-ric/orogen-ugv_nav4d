@@ -53,6 +53,13 @@ void AreaExploration::startExploring()
     explorationMode = true;
 }
 
+void AreaExploration::stopExploring()
+{
+    std::cout << "Stopping exploration mode manually ..." << std::endl;
+    explorationMode = false;
+    generateFrontiers = false;
+}
+
 void AreaExploration::clearPlannerMap()
 {
 
@@ -89,6 +96,8 @@ bool AreaExploration::configureHook()
 
     typeRegistry.getStateID("ugv_nav4d::PathPlanner", "GOAL_INVALID", planner_GOAL_INVALID);
     typeRegistry.getStateID("ugv_nav4d::PathPlanner", "NO_SOLUTION", planner_NO_SOLUTION);
+    typeRegistry.getStateID("ugv_nav4d::PathPlanner", "EXCEPTION", planner_EXCEPTION);
+    typeRegistry.getStateID("ugv_nav4d::PathPlanner", "START_INVALID", planner_START_INVALID);
 
     std::cout << "PathPlanner state GOAL_INVALID has id " << planner_GOAL_INVALID << std::endl;
     std::cout << "PathPlanner state NO_SOLUTION has id " << planner_NO_SOLUTION << std::endl;
@@ -163,6 +172,10 @@ void AreaExploration::updateHook()
                     generateFrontiers = false;
                     explorationMode = false;
                 }
+            } else if (planner_state == planner_EXCEPTION || planner_state == planner_START_INVALID) {
+                std::cout << "Planner reported an error. Stopping AreaExploration..." << std::endl;
+                generateFrontiers = false;
+                explorationMode = false;
             }
         }
     } 
