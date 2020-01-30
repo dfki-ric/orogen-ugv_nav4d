@@ -4,6 +4,7 @@
 #define UGV_NAV4D_AREAEXPLORATION_TASK_HPP
 
 #include "ugv_nav4d/AreaExplorationBase.hpp"
+#include <orocos_cpp/TypeRegistry.hpp>
 
 namespace maps {
 namespace operations {
@@ -29,20 +30,34 @@ namespace ugv_nav4d{
         std::shared_ptr<maps::operations::CoverageTracker> coverage;
 
         envire::core::SpatioTemporal<maps::grid::MLSMapKalman> map;
-        base::samples::RigidBodyState curPose, previousPose;
+        base::samples::RigidBodyState curPose, previousPose, latestBestGoal;
+        boost::int32_t planner_state;
+        std::vector<base::samples::RigidBodyState> currentGoals;
         bool poseValid;
         bool mapValid;
         
+        bool explorationMode;
         bool generateFrontiers;
         ugv_nav4d::OrientedBoxConfig area;
+
+        unsigned int planner_GOAL_INVALID;
+        unsigned int planner_NO_SOLUTION;
         
         /* Triggers the calculation of a new list of goals
          */
         virtual void calculateGoals(::ugv_nav4d::OrientedBoxConfig const & area);
+        
+        /* Starts the AreaExploration-Mode
+        */
+        virtual void startExploring();
 
         /* Clears the internal exploration map. All obstacles will be readded by receiving the next trav map.
          */
         virtual void clearPlannerMap();
+
+        void setAndOutputBestGoal();
+
+        void outputAllGoals();
 
     public:
         /** TaskContext constructor for AreaExploration
