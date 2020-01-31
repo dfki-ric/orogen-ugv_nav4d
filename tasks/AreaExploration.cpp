@@ -42,11 +42,15 @@ void AreaExploration::calculateGoals(::ugv_nav4d::OrientedBoxConfig const & area
     }
 }
 
-void AreaExploration::startExploring()
+void AreaExploration::resumeExploring()
 {
     if (!explorationMode) {
-        explorationMode = true;
-        std::cout << "Restarting ExplorationMode with previous area..." << std::endl;
+        if (!areaValid) {
+            std::cout << "Cannot restart ExplorationMode since there was no area set before!" << std::endl;
+        } else {
+            explorationMode = true;
+            std::cout << "Restarting ExplorationMode with previous area..." << std::endl;
+        }
     }
 }
 
@@ -107,6 +111,7 @@ bool AreaExploration::startHook()
 {
     poseValid = false;
     mapValid = false;
+    areaValid = false;
     
     explorationMode = false;
     generateFrontiers = false;
@@ -157,6 +162,8 @@ void AreaExploration::updateHook()
     if (_area.readNewest(area, false) == RTT::NewData) {
         std::cout << "New area detected. Starting exploration mode with new area ..." << std::endl;
         explorationMode = true;
+        if (!areaValid)
+            areaValid = true;
     }
 
     boost::int32_t newPlannerState;

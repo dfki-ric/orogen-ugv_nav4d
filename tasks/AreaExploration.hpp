@@ -39,6 +39,7 @@ namespace ugv_nav4d{
         bool explorationMode;
         bool generateFrontiers;
         ugv_nav4d::OrientedBoxConfig area;
+        bool areaValid;
 
         unsigned int planner_GOAL_INVALID;
         unsigned int planner_NO_SOLUTION;
@@ -51,7 +52,7 @@ namespace ugv_nav4d{
         
         /* Starts the AreaExploration-Mode
         */
-        virtual void startExploring(); 
+        virtual void resumeExploring(); 
         
         /* Stops the AreaExploration-Mode
         */

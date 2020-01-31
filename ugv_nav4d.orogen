@@ -116,8 +116,8 @@ task_context "AreaExploration" do
         doc("Triggers the calculation of a new list of goals")
 
 
-    operation("startExploring").
-        doc("Starts the AreaExploration-Mode")
+    operation("resumeExploring").
+        doc("Resumes the AreaExploration-Mode")
 
     operation("stopExploring").
         doc("Stops the AreaExploration-Mode")
