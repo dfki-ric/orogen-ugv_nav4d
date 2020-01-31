@@ -153,6 +153,7 @@ end
 
 
 typekit do
+    export_types 'ugv_nav4d/OrientedBoxConfig'
     export_types 'ugv_nav4d/Motion'
     export_types 'std/vector</ugv_nav4d/Motion>'
 end

@@ -44,13 +44,10 @@ void AreaExploration::calculateGoals(::ugv_nav4d::OrientedBoxConfig const & area
 
 void AreaExploration::startExploring()
 {
-    base::Vector3d center(0.0,0.0,0.0);
-    base::Vector3d dimensions(20.0,20.0,10.0);
-    base::Orientation orientation(1.0,0.0,0.0,0.0);
-    area = OrientedBoxConfig{center, dimensions, orientation};
-
-    std::cout << "Area set. Starting exploration mode ..." << std::endl;
-    explorationMode = true;
+    if (!explorationMode) {
+        explorationMode = true;
+        std::cout << "Restarting ExplorationMode with previous area..." << std::endl;
+    }
 }
 
 void AreaExploration::stopExploring()
@@ -157,25 +154,32 @@ void AreaExploration::updateHook()
         }
     }
 
+    if (_area.readNewest(area, false) == RTT::NewData) {
+        std::cout << "New area detected. Starting exploration mode with new area ..." << std::endl;
+        explorationMode = true;
+    }
+
     boost::int32_t newPlannerState;
-    if (_planner_state.readNewest(newPlannerState, false == RTT::NewData)) {
+    if (_planner_state.readNewest(newPlannerState, false) == RTT::NewData) {
         if (newPlannerState != planner_state) {
             planner_state = newPlannerState;
             std::cout << "Planner changed to state " << planner_state << std::endl;
-            if ((planner_state == planner_GOAL_INVALID || planner_state == planner_NO_SOLUTION) && state() == EXPLORING) { // GOAL_INVALID or NO_SOLUTION while exploring
-                if (currentGoals.size() > 1) { // there is an other goal than the latest.
-                    std::cout << "Planner says that current best goal is invalid. Writing next best goal on output." << std::endl;
-                    currentGoals.erase(currentGoals.begin(), currentGoals.begin() + 1); // erase latestBestGoal
-                    setAndOutputBestGoal();
-                } else {
-                    std::cout << "There are no goals that the planner accepted. Stopping AreaExploration" << std::endl;
+            if (explorationMode) {
+                if ((planner_state == planner_GOAL_INVALID || planner_state == planner_NO_SOLUTION) && state() == EXPLORING) { // GOAL_INVALID or NO_SOLUTION while exploring
+                    if (currentGoals.size() > 1) { // there is an other goal than the latest.
+                        std::cout << "Planner says that current best goal is invalid. Writing next best goal on output." << std::endl;
+                        currentGoals.erase(currentGoals.begin(), currentGoals.begin() + 1); // erase latestBestGoal
+                        setAndOutputBestGoal();
+                    } else {
+                        std::cout << "There are no goals that the planner accepted. Stopping AreaExploration" << std::endl;
+                        generateFrontiers = false;
+                        explorationMode = false;
+                    }
+                } else if (planner_state == planner_EXCEPTION || planner_state == planner_START_INVALID) {
+                    std::cout << "Planner reported an error. Stopping AreaExploration..." << std::endl;
                     generateFrontiers = false;
                     explorationMode = false;
                 }
-            } else if (planner_state == planner_EXCEPTION || planner_state == planner_START_INVALID) {
-                std::cout << "Planner reported an error. Stopping AreaExploration..." << std::endl;
-                generateFrontiers = false;
-                explorationMode = false;
             }
         }
     } 
@@ -189,7 +193,7 @@ void AreaExploration::updateHook()
         state(ugv_nav4d::AreaExplorationBase::NO_MAP);
     }
     else {
-        if (!explorationMode && !generateFrontiers) 
+        if (!explorationMode && !generateFrontiers && state() != AREA_EXPLORED) 
         {
             state(GOT_MAP_AND_POSE);
         }
@@ -202,7 +206,7 @@ void AreaExploration::updateHook()
                 // goal was reached
                 generateFrontiers = true;
             } else if (state() == GOT_MAP_AND_POSE) {
-                std::cout << "Starting to compute frontierts and select first goal." << std::endl;
+                std::cout << "Starting to compute frontiers and select first goal." << std::endl;
                 generateFrontiers = true;
             }
         }
