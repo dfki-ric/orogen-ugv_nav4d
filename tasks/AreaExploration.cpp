@@ -206,7 +206,10 @@ void AreaExploration::updateHook()
     else {
         if (!explorationMode && !generateFrontiers && state() != AREA_EXPLORED) 
         {
-            state(GOT_MAP_AND_POSE);
+            if (state() != GOT_MAP_AND_POSE) {
+                state(GOT_MAP_AND_POSE);
+                writeTravMap();
+            }
         }
 
         if(explorationMode) {  
@@ -216,7 +219,7 @@ void AreaExploration::updateHook()
                 std::cout << "Goal was reached. Starting to compute frontiers and select new goal." << std::endl;
                 // goal was reached
                 generateFrontiers = true;
-            } else if (state() == GOT_MAP_AND_POSE) {
+            } else if (state() == GOT_MAP_AND_POSE || state() == AREA_EXPLORED) {
                 std::cout << "Starting to compute frontiers and select first goal." << std::endl;
                 generateFrontiers = true;
             }
