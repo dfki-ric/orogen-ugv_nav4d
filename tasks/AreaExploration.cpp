@@ -178,16 +178,18 @@ void AreaExploration::updateHook()
                     if (currentGoals.size() > 1) { // there is an other goal than the latest.
                         std::cout << "Planner says that current best goal is invalid. Writing next best goal on output." << std::endl;
                         currentGoals.erase(currentGoals.begin(), currentGoals.begin() + 1); // erase latestBestGoal
-                        setAndOutputBestGoal();
+                        setAndWriteBestGoal();
                     } else {
                         std::cout << "There are no goals that the planner accepted. Stopping AreaExploration" << std::endl;
                         generateFrontiers = false;
                         explorationMode = false;
+                        writeTravMap();
                     }
                 } else if (planner_state == planner_EXCEPTION || planner_state == planner_START_INVALID) {
                     std::cout << "Planner reported an error. Stopping AreaExploration..." << std::endl;
                     generateFrontiers = false;
                     explorationMode = false;
+                    writeTravMap();
                 }
             }
         }
@@ -226,7 +228,8 @@ void AreaExploration::updateHook()
             std::vector<base::samples::RigidBodyState> outFrontiers;
             if(explorer->getFrontiers(curPose.position, area, outFrontiers))
             {
-                state(GOALS_GENERATED);
+                if (!explorationMode)
+                    state(GOALS_GENERATED);
                 
                 for(auto &f : outFrontiers)
                 {
@@ -235,30 +238,23 @@ void AreaExploration::updateHook()
                 }
                 
                 currentGoals = outFrontiers;
-                outputAllGoals();
+                writeAllGoals();
 
                 if (explorationMode) {
                     state(EXPLORING);
-                    setAndOutputBestGoal();
+                    setAndWriteBestGoal();
                 }
             }
             else
             {
-                std::cout << "area explored." << std::endl;
                 state(AREA_EXPLORED);
                 if (explorationMode) {
                     explorationMode = false;
                 }
             }
-            
-            std::cout << "Write updated travMap to output." << std::endl;
-            SpatioTemporal<TraversabilityBaseMap3d> st(frontGen->getTraversabilityMap().copyCast<TraversabilityNodeBase*>());
-            // planner has static transformation to world by [10, 10, 0]
-            st.setFrameID("planner");
-            _tr_map.write(st);
-                        
-            generateFrontiers = false;
-            
+                       
+            writeTravMap();
+            generateFrontiers = false;            
             V3DD::FLUSH_DRAWINGS();
         }
 
@@ -277,7 +273,7 @@ void AreaExploration::cleanupHook()
     AreaExplorationBase::cleanupHook();
 }
 
-void AreaExploration::setAndOutputBestGoal()
+void AreaExploration::setAndWriteBestGoal()
 {
     Eigen::Affine3d mls2Planner(Eigen::Translation3d(_gridOffset.rvalue()));
     latestBestGoal = currentGoals.front();
@@ -288,7 +284,7 @@ void AreaExploration::setAndOutputBestGoal()
     std::cout << "New best goal position is " << latestBestGoal.position << " (in planner frame)" << std::endl;
 }
 
-void AreaExploration::outputAllGoals()
+void AreaExploration::writeAllGoals()
 {
     Eigen::Affine3d mls2Planner(Eigen::Translation3d(_gridOffset.rvalue()));
     std::vector<base::samples::RigidBodyState> outputGoalsInMls = currentGoals;
@@ -296,4 +292,12 @@ void AreaExploration::outputAllGoals()
         goal.setTransform(mls2Planner.inverse() * goal.getTransform());
     }
     _goals_out.write(outputGoalsInMls);
+}
+
+void AreaExploration::writeTravMap()
+{
+    SpatioTemporal<TraversabilityBaseMap3d> st(frontGen->getTraversabilityMap().copyCast<TraversabilityNodeBase*>());
+    // planner has static transformation to world by [10, 10, 0]
+    st.setFrameID("planner");
+    _tr_map.write(st);
 }

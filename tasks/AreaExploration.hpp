@@ -62,9 +62,11 @@ namespace ugv_nav4d{
          */
         virtual void clearPlannerMap();
 
-        void setAndOutputBestGoal();
+        void setAndWriteBestGoal();
 
-        void outputAllGoals();
+        void writeAllGoals();
+
+        void writeTravMap();
 
     public:
         /** TaskContext constructor for AreaExploration
