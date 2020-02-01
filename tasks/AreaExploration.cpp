@@ -162,6 +162,8 @@ void AreaExploration::updateHook()
     if (_area.readNewest(area, false) == RTT::NewData) {
         std::cout << "New area detected. Starting exploration mode with new area ..." << std::endl;
         explorationMode = true;
+        area.center = mls2Planner * area.center;
+        area.orientation = base::Quaterniond((mls2Planner * area.orientation).linear());
         if (!areaValid)
             areaValid = true;
     }
