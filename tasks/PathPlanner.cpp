@@ -10,6 +10,8 @@
 #include <boost/archive/binary_iarchive.hpp>
 #include <boost/archive/binary_oarchive.hpp>
 
+#include <algorithm>
+
 using namespace ugv_nav4d;
 
 using Eigen::Vector3d;
@@ -18,6 +20,7 @@ using Eigen::Translation3d;
 using maps::grid::TraversabilityNodeBase;
 using maps::grid::TraversabilityBaseMap3d;
 using envire::core::SpatioTemporal;
+using trajectory_follower::SubTrajectory;
 
 PathPlanner::PathPlanner(std::string const& name)
     : PathPlannerBase(name), planner(nullptr)
@@ -150,8 +153,7 @@ void PathPlanner::updateHook()
         }
 
         setIfNotSet(PLANNING);
-        std::vector<base::Trajectory> trajectory2D;
-        std::vector<base::Trajectory> trajectory3D;
+        std::vector<SubTrajectory> trajectory2D, trajectory3D;
 
         // get z-coords from mls and set in in stop_pose.position
         Eigen::Vector3d contact_point;
@@ -160,11 +162,24 @@ void PathPlanner::updateHook()
         stop_pose.position.z() = contact_point.z();
 
         Planner::PLANNING_RESULT res = planner->plan(_maxTime.value(), start_pose, stop_pose, trajectory2D, trajectory3D, _dumpOnError.get(), _dumpOnSuccess.get());
+
+        // Create vectors of base trajectories for obtained trajectories which can be written
+        // to the original output ports.
+        std::vector<base::Trajectory>
+            trajectory2DBase(trajectory2D.size()),
+            trajectory3DBase(trajectory3D.size());
+        std::transform(trajectory2D.cbegin(), trajectory2D.cend(), trajectory2DBase.begin(),
+                [](const SubTrajectory& t) { return t.toBaseTrajectory(); });
+        std::transform(trajectory3D.cbegin(), trajectory3D.cend(), trajectory3DBase.begin(),
+                [](const SubTrajectory& t) { return t.toBaseTrajectory(); });
+
         switch(res)
         {
             case Planner::FOUND_SOLUTION:
-                _trajectory2D.write(trajectory2D);
-                _trajectory3D.write(trajectory3D);
+                _trajectory2D.write(trajectory2DBase);
+                _trajectory3D.write(trajectory3DBase);
+                _detailedTrajectory2D.write(trajectory2D);
+                _detailedTrajectory3D.write(trajectory3D);
                 setIfNotSet(FOUND_SOLUTION);
                 break;
             case Planner::GOAL_INVALID:

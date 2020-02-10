@@ -22,6 +22,8 @@ using_library "trajectory_follower"
 using_library "base-lib"
 using_library "orocos_cpp"
 
+import_types_from "trajectory_follower/SubTrajectory.hpp"
+
 task_context "PathPlanner" do
     needs_configuration
 
@@ -38,6 +40,8 @@ task_context "PathPlanner" do
     input_port "map", spatio_temporal('/maps/grid/MLSMapKalman')
     output_port "trajectory2D", "std::vector<base/Trajectory>"
     output_port "trajectory3D", "std::vector<base/Trajectory>"
+    output_port "detailedTrajectory2D", "std::vector<trajectory_follower/SubTrajectory>"
+    output_port "detailedTrajectory3D", "std::vector<trajectory_follower/SubTrajectory>"
 
     output_port "tr_map", spatio_temporal('/maps/grid/TraversabilityBaseMap3d')
 
