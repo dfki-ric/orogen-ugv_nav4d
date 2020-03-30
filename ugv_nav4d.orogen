@@ -50,16 +50,16 @@ task_context "PathPlanner" do
 
     dynamic_output_port /^debug_ugv_nav4d/, "/boost/shared_ptr</vizkit3dDebugDrawings/CommandBuffer>"
 
-    input_port "start_pose_samples", "base/samples/RigidBodyState"
+    input_port "start_pose_samples", "base/samples/RigidBodyState"  # should be travConfig.distToGround above the floor
 
     operation("triggerPathPlanning").
-        arg("start_position", "base/samples/RigidBodyState"). # should be travConfig.stepHeight above the floor
-        arg("goal_position", "base/samples/RigidBodyState"). # should be travConfig.stepHeight above the floor
+        arg("start_position", "base/samples/RigidBodyState"). # should be travConfig.distToGround above the floor
+        arg("goal_position", "base/samples/RigidBodyState"). # should be travConfig.distToGround above the floor
         returns("int").
         doc("Triggers planning of a new path")
 
-    input_port "goal_pose_relative", "base/samples/RigidBodyState"
-    input_port "goal_pose_absolute", "base/samples/RigidBodyState"
+    input_port "goal_pose_relative", "base/samples/RigidBodyState"  # should be travConfig.distToGround above the floor
+    input_port "goal_pose_absolute", "base/samples/RigidBodyState"   # should be travConfig.distToGround above the floor
 
     runtime_states :NO_MAP,
         :SET_UP_MAP_AND_SPLINES,

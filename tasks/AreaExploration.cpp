@@ -236,12 +236,6 @@ void AreaExploration::updateHook()
                 if (!explorationMode)
                     state(GOALS_GENERATED);
                 
-                for(auto &f : outFrontiers)
-                {
-                    //convert to ground frame
-                    f.position +=  f.orientation * Eigen::Vector3d(0,0, -_travConfig.get().distToGround);
-                }
-                
                 currentGoals = outFrontiers;
                 writeAllGoals();
 
