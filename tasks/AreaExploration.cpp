@@ -102,6 +102,8 @@ bool AreaExploration::configureHook()
 
     std::cout << "PathPlanner state GOAL_INVALID has id " << planner_GOAL_INVALID << std::endl;
     std::cout << "PathPlanner state NO_SOLUTION has id " << planner_NO_SOLUTION << std::endl;
+    std::cout << "PathPlanner state EXCEPTION has id " << planner_EXCEPTION << std::endl;
+    std::cout << "PathPlanner state START_INVALID has id " << planner_START_INVALID << std::endl;
 
     if (! AreaExplorationBase::configureHook())
         return false;

@@ -156,12 +156,15 @@ void PathPlanner::updateHook()
         setIfNotSet(PLANNING);
         std::vector<SubTrajectory> trajectory2D, trajectory3D;
 
+/*
         // get z-coords from mls and set in in stop_pose.position
-        Eigen::Vector3d contact_point;
+        double contact_z;
         const auto translated_end = stop_pose.position + _gridOffset.rvalue();
-        map.data.getClosestContactPoint(translated_end, contact_point);
-        stop_pose.position.z() = contact_point.z();
-
+        map.data.getClosestSurfacePos(translated_end, contact_z);
+        std::cout << "Raw stop_pose: \n" << stop_pose.position << std::endl;
+        stop_pose.position.z() = contact_z;
+       std::cout << "Adjusted stop_pose: \n" << stop_pose.position << std::endl;
+*/
         Planner::PLANNING_RESULT res = planner->plan(_maxTime.value(), start_pose, stop_pose, trajectory2D, trajectory3D, _dumpOnError.get(), _dumpOnSuccess.get());
 
         // Create vectors of base trajectories for obtained trajectories which can be written
