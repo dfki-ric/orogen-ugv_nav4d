@@ -121,6 +121,7 @@ void PathPlanner::updateHook()
     {
         gotMap = true;
         map.data.translate(_gridOffset.rvalue());
+        setIfNotSet(SET_UP_MAP_AND_SPLINES);
         planner->updateMap(map.getData());
         setIfNotSet(GOT_MAP);
     }

@@ -62,6 +62,7 @@ task_context "PathPlanner" do
     input_port "goal_pose_absolute", "base/samples/RigidBodyState"
 
     runtime_states :NO_MAP,
+        :SET_UP_MAP_AND_SPLINES,
         :GOT_MAP,
         :GOAL_INVALID,
         :START_INVALID,
