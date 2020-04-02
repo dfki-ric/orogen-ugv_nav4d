@@ -179,7 +179,7 @@ void AreaExploration::updateHook()
     if (_planner_state.readNewest(newPlannerState, false) == RTT::NewData) {
         if (newPlannerState != planner_state) {
             planner_state = newPlannerState;
-            std::cout << "AreaExplorer: Planner changed to state " << numToPlannerState[planner_state] << std::endl;
+            std::cout << "AreaExplorer: Planner changed to state " << planner_state << " (" << numToPlannerState[planner_state] << ")" << std::endl;
             if (explorationMode) {
                 if ((planner_state == planner_GOAL_INVALID || planner_state == planner_NO_SOLUTION) && state() == EXPLORING) { // GOAL_INVALID or NO_SOLUTION while exploring
                     if (currentGoals.size() > 1) { // there is an other goal than the latest.

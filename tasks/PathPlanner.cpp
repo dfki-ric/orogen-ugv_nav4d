@@ -58,6 +58,28 @@ int32_t PathPlanner::triggerPathPlanning(const base::samples::RigidBodyState& st
     return 1;
 }
 
+int32_t PathPlanner::generateTravMap() 
+{
+    if(!gotMap)
+        return 0;
+
+    base::samples::RigidBodyState pose;
+    if(_start_pose_samples.readNewest(pose, false) == RTT::NoData) 
+    {
+        pose = start_pose;
+    }
+
+    if(!initalPatchAdded)
+    {
+        planner->setInitialPatch(pose.getTransform(), _initialPatchRadius.get());
+        initalPatchAdded = true;
+    }
+
+    std::cout << "PathPlanner: Manually generating travMap..." << std::endl;
+    planner->genTravMap(pose);
+    return 0;
+}
+
 bool PathPlanner::configureHook()
 {
     std::vector<std::string> channels = V3DD::GET_DECLARED_CHANNELS();
@@ -144,6 +166,7 @@ void PathPlanner::updateHook()
 
     if(executePlanning)
     {
+        std::cout << "PathPlanner: Executing planning..." << std::endl;
         _planning_start.write(start_pose);
         _planning_goal.write(stop_pose);
 
