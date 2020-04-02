@@ -41,6 +41,7 @@ namespace ugv_nav4d{
         ugv_nav4d::OrientedBoxConfig area;
         bool areaValid;
 
+        std::map<int, std::string> numToPlannerState;
         unsigned int planner_GOAL_INVALID;
         unsigned int planner_NO_SOLUTION;
         unsigned int planner_EXCEPTION;

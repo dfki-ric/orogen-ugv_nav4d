@@ -100,10 +100,14 @@ bool AreaExploration::configureHook()
     typeRegistry.getStateID("ugv_nav4d::PathPlanner", "EXCEPTION", planner_EXCEPTION);
     typeRegistry.getStateID("ugv_nav4d::PathPlanner", "START_INVALID", planner_START_INVALID);
 
-    std::cout << "PathPlanner state GOAL_INVALID has id " << planner_GOAL_INVALID << std::endl;
-    std::cout << "PathPlanner state NO_SOLUTION has id " << planner_NO_SOLUTION << std::endl;
-    std::cout << "PathPlanner state EXCEPTION has id " << planner_EXCEPTION << std::endl;
-    std::cout << "PathPlanner state START_INVALID has id " << planner_START_INVALID << std::endl;
+    numToPlannerState[planner_GOAL_INVALID] = "GOAL_INVALID";
+    numToPlannerState[planner_NO_SOLUTION] = "NO_SOLUTION";
+    numToPlannerState[planner_EXCEPTION] = "EXCEPTION";
+    numToPlannerState[planner_START_INVALID] = "START_INVALID";
+
+    for (auto it=numToPlannerState.begin(); it != numToPlannerState.end(); it++) {
+        std::cout << "PathPlanner state " << it->second << " has id " << it->first << std::endl;
+    }
 
     if (! AreaExplorationBase::configureHook())
         return false;
@@ -144,7 +148,7 @@ void AreaExploration::updateHook()
 
         if(!poseValid)
         {
-            std::cout << "Setting initial patch for area explorer" << std::endl;
+            std::cout << "AreaExplorer: Setting initial patch for area explorer" << std::endl;
             explorer->setInitialPatch(curPose.getTransform(), _initialPatchRadius.get());
             previousPose = curPose;
         }
@@ -153,7 +157,7 @@ void AreaExploration::updateHook()
         if(coverage && mapValid && (curPose.position - previousPose.position).norm() > 
         _coverageUpdateDistance.get())
         {
-            std::cout << "Adding coverage at " << curPose.position.transpose() << '\n';
+            std::cout << "AreaExplorer: Adding coverage at " << curPose.position.transpose() << '\n';
             // TODO AngleSegment and orientation are ignored at the moment
             coverage->addCoverage(_coverageRadius.get(), base::AngleSegment{}, curPose.getPose());
             _coverage.write(coverage->getCoverage());
@@ -162,8 +166,9 @@ void AreaExploration::updateHook()
     }
 
     if (_area.readNewest(area, false) == RTT::NewData) {
-        std::cout << "New area detected. Starting exploration mode with new area ..." << std::endl;
+        std::cout << "AreaExplorer: New area detected. Starting exploration mode with new area ..." << std::endl;
         explorationMode = true;
+        // transform area to planner frame
         area.center = mls2Planner * area.center;
         area.orientation = base::Quaterniond((mls2Planner * area.orientation).linear());
         if (!areaValid)
@@ -174,21 +179,21 @@ void AreaExploration::updateHook()
     if (_planner_state.readNewest(newPlannerState, false) == RTT::NewData) {
         if (newPlannerState != planner_state) {
             planner_state = newPlannerState;
-            std::cout << "Planner changed to state " << planner_state << std::endl;
+            std::cout << "AreaExplorer: Planner changed to state " << numToPlannerState[planner_state] << std::endl;
             if (explorationMode) {
                 if ((planner_state == planner_GOAL_INVALID || planner_state == planner_NO_SOLUTION) && state() == EXPLORING) { // GOAL_INVALID or NO_SOLUTION while exploring
                     if (currentGoals.size() > 1) { // there is an other goal than the latest.
-                        std::cout << "Planner says that current best goal is invalid. Writing next best goal on output." << std::endl;
+                        std::cout << "AreaExplorer: Planner says that current best goal is invalid or there is no solution to it. Writing next best goal on output." << std::endl;
                         currentGoals.erase(currentGoals.begin(), currentGoals.begin() + 1); // erase latestBestGoal
                         setAndWriteBestGoal();
                     } else {
-                        std::cout << "There are no goals that the planner accepted. Stopping AreaExploration" << std::endl;
+                        std::cout << "AreaExplorer: The planner did not accept any of the computed goals. Stopping AreaExploration!" << std::endl;
                         generateFrontiers = false;
                         explorationMode = false;
                         writeTravMap();
                     }
                 } else if (planner_state == planner_EXCEPTION || planner_state == planner_START_INVALID) {
-                    std::cout << "Planner reported an error. Stopping AreaExploration..." << std::endl;
+                    std::cout << "AreaExplorer: Planner reported an error. Stopping AreaExploration!" << std::endl;
                     generateFrontiers = false;
                     explorationMode = false;
                     writeTravMap();
@@ -210,7 +215,9 @@ void AreaExploration::updateHook()
         {
             if (state() != GOT_MAP_AND_POSE) {
                 state(GOT_MAP_AND_POSE);
+                std::cout << "AreaExplorer: Got map and pose. Generating traversability map..." << std::endl;
                 writeTravMap();
+                std::cout << "AreaExplorer: Generated and wrote traversability map!" << std::endl;
             }
         }
 
@@ -218,11 +225,11 @@ void AreaExploration::updateHook()
             //std::cout << "Distance to latest goal = " << (curPose.position - latestBestGoal.position).norm() << std::endl;         
             if (state() == EXPLORING && (curPose.position.head(2) - latestBestGoal.position.head(2)).norm() < _goalReachedThresholdDistance.get())
             {
-                std::cout << "Goal was reached. Starting to compute frontiers and select new goal." << std::endl;
+                std::cout << "AreaExplorer: Goal was reached (was in threshold range). Starting to compute frontiers and select new best goal." << std::endl;
                 // goal was reached
                 generateFrontiers = true;
             } else if (state() == GOT_MAP_AND_POSE || state() == AREA_EXPLORED) {
-                std::cout << "Starting to compute frontiers and select first goal." << std::endl;
+                std::cout << "AreaExplorer: Starting to compute frontiers and select first goal." << std::endl;
                 generateFrontiers = true;
             }
         }
@@ -280,7 +287,7 @@ void AreaExploration::setAndWriteBestGoal()
     bestGoalInMls.setTransform(mls2Planner.inverse() * bestGoalInMls.getTransform());
     _goal_out_best.write(bestGoalInMls);
 
-    std::cout << "New best goal position is " << latestBestGoal.position << " (in planner frame)" << std::endl;
+    std::cout << "AreaExplorer: New best goal position is " << latestBestGoal.position << " (in planner frame)" << std::endl;
 }
 
 void AreaExploration::writeAllGoals()
