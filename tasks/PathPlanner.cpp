@@ -1,7 +1,6 @@
 /* Generated from orogen/lib/orogen/templates/tasks/Task.cpp */
 
 #include "PathPlanner.hpp"
-#include "ugv_nav4dTypes.hpp"
 #include <ugv_nav4d/Planner.hpp>
 #include <envire_core/items/SpatioTemporal.hpp>
 #include <vizkit3d_debug_drawings/DebugDrawing.hpp>
