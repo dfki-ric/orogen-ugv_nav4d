@@ -67,7 +67,7 @@ task_context "MapLoader" do
     property "path", "std::string"
     property "gridResolution", "double"
     property "gapSize", "double"
-    output_port("map", spatio_temporal('/maps/grid/MLSMapKalman'))
+    output_port("map", '/maps/grid/MLSMapKalman')
     
     operation("publishMap").
         doc("writes the map to the port")

@@ -35,26 +35,24 @@ bool MapLoader::loadMls(const std::string& path)
         if(plyReader.read(path, *cloud) >= 0)
         {
             pcl::PointXYZ mi, ma; 
-            pcl::getMinMax3D (*cloud, mi, ma); 
-
-            //transform point cloud to zero (instead we could also use MlsMap::translate later but that seems to be broken?)
-            Eigen::Affine3f pclTf = Eigen::Affine3f::Identity();
-            pclTf.translation() << -mi.x, -mi.y, -mi.z;
-            pcl::transformPointCloud (*cloud, *cloud, pclTf);
-            
-            pcl::getMinMax3D (*cloud, mi, ma); 
+            pcl::getMinMax3D (*cloud, mi, ma);
       
             const double mls_res = _gridResolution.get();
-            const double size_x = ma.x;
-            const double size_y = ma.y;
+            const double size_x = ma.x - mi.x;
+            const double size_y = ma.y - mi.y;
             
-            const maps::grid::Vector2ui numCells(size_x / mls_res + 1, size_y / mls_res + 1);
-            std::cout << "NUM CELLS: " << numCells << std::endl;
+            const maps::grid::Vector2ui gridSize(size_x / mls_res + 1, size_y / mls_res + 1);
+			const maps::grid::Vector2d cellSize(mls_res, mls_res);
+            std::cout << "Grid-Size: " << gridSize[0] << " * " << gridSize[1] << std::endl;
             
+            base::Transform3d pclTf = base::Transform3d::Identity();
+			const double mid = mls_res / 2.0;
+            pclTf.translation() << mid-mi.x, mid-mi.y, mid-mi.z;
+			
             maps::grid::MLSConfig cfg;
             cfg.gapSize = _gapSize.get();
-            map = maps::grid::MLSMapKalman(numCells, maps::grid::Vector2d(mls_res, mls_res), cfg);
-            map.mergePointCloud(*cloud, base::Transform3d::Identity());
+            map = maps::grid::MLSMapKalman(gridSize, cellSize, cfg);
+            map.mergePointCloud(*cloud, pclTf);
         }
         return true;
     }
