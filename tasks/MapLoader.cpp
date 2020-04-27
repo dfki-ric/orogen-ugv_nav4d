@@ -51,8 +51,10 @@ bool MapLoader::loadMls(const std::string& path)
 			
             maps::grid::MLSConfig cfg;
             cfg.gapSize = _gapSize.get();
-            map = maps::grid::MLSMapKalman(gridSize, cellSize, cfg);
-            map.mergePointCloud(*cloud, pclTf);
+            map.frame_id = "static_map";
+            map.time = base::Time::now();
+            map.data = maps::grid::MLSMapKalman(gridSize, cellSize, cfg);
+            map.data.mergePointCloud(*cloud, pclTf);
         }
         return true;
     }

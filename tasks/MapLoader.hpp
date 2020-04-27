@@ -13,7 +13,7 @@ namespace ugv_nav4d{
     friend class MapLoaderBase;
     
     private:
-        maps::grid::MLSMapKalman map;
+        envire::core::SpatioTemporal<maps::grid::MLSMapKalman> map;
         bool mapLoaded;
         bool sendMap; //if true map will be published on next cycle
     
