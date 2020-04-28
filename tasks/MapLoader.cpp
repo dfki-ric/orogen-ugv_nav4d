@@ -18,7 +18,13 @@ MapLoader::~MapLoader()
 
 void MapLoader::publishMap()
 {
-    sendMap = true;
+    if(mapLoaded)
+    {
+        _map.write(map);
+    }else
+    {
+        LOG_ERROR_S << "No map loaded!" << std::endl;
+    }
 }
 
 bool MapLoader::loadMls(const std::string& path)
@@ -37,7 +43,7 @@ bool MapLoader::loadMls(const std::string& path)
             pcl::PointXYZ mi, ma; 
             pcl::getMinMax3D (*cloud, mi, ma);
       
-            const double mls_res = _gridResolution.get();
+            const double mls_res = _resolution;
             const double size_x = ma.x - mi.x;
             const double size_y = ma.y - mi.y;
             
@@ -49,11 +55,9 @@ bool MapLoader::loadMls(const std::string& path)
 			const double mid = mls_res / 2.0;
             pclTf.translation() << mid-mi.x, mid-mi.y, mid-mi.z;
 			
-            maps::grid::MLSConfig cfg;
-            cfg.gapSize = _gapSize.get();
-            map.frame_id = "static_map";
+            map.frame_id = _map_frame;
             map.time = base::Time::now();
-            map.data = maps::grid::MLSMapKalman(gridSize, cellSize, cfg);
+            map.data = maps::grid::MLSMapKalman(gridSize, cellSize, _mls_config);
             map.data.mergePointCloud(*cloud, pclTf);
         }
         return true;
@@ -74,7 +78,7 @@ bool MapLoader::configureHook()
     
     mapLoaded = loadMls(_path.get());
     if(mapLoaded)
-        sendMap = true;
+        publishMap();
     
     return true;
 }
@@ -87,13 +91,6 @@ bool MapLoader::startHook()
 void MapLoader::updateHook()
 {
     MapLoaderBase::updateHook();
-    
-    if(mapLoaded && sendMap)
-    {
-        sendMap = false;
-        _map.write(map);
-    }
-    
 }
 void MapLoader::errorHook()
 {

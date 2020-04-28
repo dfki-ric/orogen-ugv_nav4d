@@ -61,16 +61,27 @@ task_context "PathPlanner" do
     periodic 0.1
 end
 
-# Loads an mls map from a ply file (for testing or if you want to use a static map)
+# Loads a pointcloud from a ply file and generates a MLS from it.
+# (For testing or if you want to use a static map)
 task_context "MapLoader" do
 
-    property "path", "std::string"
-    property "gridResolution", "double"
-    property "gapSize", "double"
-    output_port "map", spatio_temporal('/maps/grid/MLSMapKalman')
-    
-    operation("publishMap").
-        doc("writes the map to the port")
-        
-    periodic(1.0)
+	output_port('map', spatio_temporal('maps/grid/MLSMapKalman'))
+	.doc("Generated MLS map, request via publishMap operation.")
+
+	property('path', 'std/string')
+	.doc("File location of the PLY to load.")
+
+	property('resolution', 'double', 0.1)
+	.doc("Cell size of the generated MLS map.")
+
+	property('mls_config', 'maps/grid/MLSConfig')
+	.doc("Parameters of the generated MLS map.")
+
+	property('map_frame', 'std/string', "static_map")
+	.doc("Envire frame the map will be attached to.")
+
+	operation('publishMap')
+	.doc("Writes the map to the port.")
+
+	periodic(1.0)
 end
