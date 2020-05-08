@@ -1,6 +1,7 @@
 /* Generated from orogen/lib/orogen/templates/tasks/Task.cpp */
 
 #include "MapLoader.hpp"
+
 #include <pcl/io/ply_io.h>
 #include <pcl/common/common.h>
 #include <pcl/common/transforms.h>
@@ -47,14 +48,19 @@ bool MapLoader::loadMls(const std::string& path)
             const double size_x = ma.x - mi.x;
             const double size_y = ma.y - mi.y;
             
-            const maps::grid::Vector2ui gridSize(size_x / mls_res + 1, size_y / mls_res + 1);
-			const maps::grid::Vector2d cellSize(mls_res, mls_res);
+            const maps::grid::Vector2ui gridSize(size_x / mls_res + 3, size_y / mls_res + 3);
+            const maps::grid::Vector2d cellSize(mls_res, mls_res);
+            const maps::grid::Vector2d mapSize(gridSize[0]*mls_res, gridSize[1]*mls_res);
+
             std::cout << "Grid-Size: " << gridSize[0] << " * " << gridSize[1] << std::endl;
+            std::cout << "Map-Size: " << mapSize[0] << " * " << mapSize[1] << std::endl;
             
             base::Transform3d pclTf = base::Transform3d::Identity();
-			const double mid = mls_res / 2.0;
-            pclTf.translation() << mid-mi.x, mid-mi.y, mid-mi.z;
-			
+            Eigen::Vector3d offset(-mi.x+1, -mi.y+1, 0);
+            pclTf.translation() = offset;
+            std::cout << "Range(x): " << -offset[0] << " - " << mapSize[0]-offset[0] << std::endl;
+            std::cout << "Range(y): " << -offset[1] << " - " << mapSize[1]-offset[1] << std::endl;
+
             map.frame_id = _map_frame;
             map.time = base::Time::now();
             map.data = maps::grid::MLSMapKalman(gridSize, cellSize, _mls_config);

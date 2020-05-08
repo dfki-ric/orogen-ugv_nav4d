@@ -12,8 +12,8 @@ Orocos.run 'ugv_nav4d::MapLoader' => 'loader',
   planner = Orocos.name_service.get 'planner'
 
   loader.path = "#{ENV['AUTOPROJ_CURRENT_ROOT']}/planning/ugv_nav4d/test_data/test_area2.ply"
-  loader.gridResolution = 0.1 # this has to be the same as planner.travConfig.gridResolution
-  loader.gapSize = 0.2
+  loader.resolution = 0.1 # this has to be the same as planner.travConfig.gridResolution
+  loader.mls_config.gapSize = 0.2
   
   planner.apply_conf_file("#{ENV['AUTOPROJ_CURRENT_ROOT']}/planning/orogen/ugv_nav4d/scripts/config.yml", ["default"])
 
