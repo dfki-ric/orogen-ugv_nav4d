@@ -55,16 +55,15 @@ bool MapLoader::loadMls(const std::string& path)
             std::cout << "Grid-Size: " << gridSize[0] << " * " << gridSize[1] << std::endl;
             std::cout << "Map-Size: " << mapSize[0] << " * " << mapSize[1] << std::endl;
             
-            base::Transform3d pclTf = base::Transform3d::Identity();
-            Eigen::Vector3d offset(-mi.x+1, -mi.y+1, 0);
-            pclTf.translation() = offset;
-            std::cout << "Range(x): " << -offset[0] << " - " << mapSize[0]-offset[0] << std::endl;
-            std::cout << "Range(y): " << -offset[1] << " - " << mapSize[1]-offset[1] << std::endl;
+            Eigen::Vector3d offset(mi.x-1, mi.y-1, 0);
+            std::cout << "Range(x): " << offset[0] << " - " << mapSize[0]+offset[0] << std::endl;
+            std::cout << "Range(y): " << offset[1] << " - " << mapSize[1]+offset[1] << std::endl;
 
             map.frame_id = _map_frame;
             map.time = base::Time::now();
             map.data = maps::grid::MLSMapKalman(gridSize, cellSize, _mls_config);
-            map.data.mergePointCloud(*cloud, pclTf);
+            map.data.translate(offset);
+            map.data.mergePointCloud(*cloud, base::Transform3d::Identity());
         }
         return true;
     }
