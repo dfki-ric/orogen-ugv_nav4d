@@ -14,7 +14,7 @@ primConfig:
   generateLateralMotions: False
   generateBackwardMotions: True
   generateForwardMotions: True
-  splineOrder: 4;
+  splineOrder: 4.0
 
 travConfig:
   gridResolution: 0.1

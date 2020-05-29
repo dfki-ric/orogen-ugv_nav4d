@@ -1,72 +1,91 @@
-#pragma once
+/* Generated from orogen/lib/orogen/templates/tasks/Task.hpp */
 
-#include "ugv_nav4d/PathPlannerBase.hpp"
-#include <memory>
-#include <Eigen/Core>
+#ifndef UGV_NAV4D_AREAEXPLORATION_TASK_HPP
+#define UGV_NAV4D_AREAEXPLORATION_TASK_HPP
+
+#include "ugv_nav4d/AreaExplorationBase.hpp"
+#include <orocos_cpp/TypeRegistry.hpp>
+
+namespace maps {
+namespace operations {
+
+class CoverageTracker;
+
+}  // namespace operations
+}  // namespace maps
 
 namespace ugv_nav4d{
+    class FrontierGenerator;
+    class AreaExplorer;
+    
 
-    class Planner;
 
-    /*! \class PathPlanner
-     * \brief The task context provides and requires services. It uses an ExecutionEngine to perform its functions.
-     * Essential interfaces are operations, data flow ports and properties. These interfaces have been defined using the oroGen specification.
-     * In order to modify the interfaces you should (re)use oroGen and rely on the associated workflow.
-     *
-     * \details
-     * The name of a TaskContext is primarily defined via:
-     \verbatim
-     deployment 'deployment_name'
-         task('custom_task_name','ugv_nav4d::PathPlanner')
-     end
-     \endverbatim
-     *  It can be dynamically adapted when the deployment is called with a prefix argument.
-     */
-    class PathPlanner : public PathPlannerBase
+    class AreaExploration : public AreaExplorationBase
     {
-	friend class PathPlannerBase;
+	friend class AreaExplorationBase;
     protected:
 
-    protected:
-        std::unique_ptr<Planner> planner;
-        bool initalPatchAdded;
-        bool executePlanning;
-        bool gotMap;
-        base::samples::RigidBodyState start_pose;
-        base::samples::RigidBodyState stop_pose;
+        std::shared_ptr<FrontierGenerator> frontGen;
+        std::shared_ptr<AreaExplorer> explorer;
+        std::shared_ptr<maps::operations::CoverageTracker> coverage;
 
-
-        void setIfNotSet(const PathPlannerBase::States &newState);
-
-        /** Triggers planning from @p start to @p goal.
-         * Planning will start once a map has been received
-         * @param start Start position of the robot body in map frame (this should be config.stepHeight above ground)
-         * @param goal Goal position of the robot body in map frame (this should be config.stepHeight above ground)
-         *
-         */
-        virtual boost::int32_t triggerPathPlanning(::base::samples::RigidBodyState const & start, ::base::samples::RigidBodyState const & goal);
+        envire::core::SpatioTemporal<maps::grid::MLSMapKalman> map;
+        base::samples::RigidBodyState curPose, previousPose, latestBestGoal;
+        boost::int32_t planner_state;
+        std::vector<base::samples::RigidBodyState> currentGoals;
+        bool poseValid;
+        bool mapValid;
         
-        /** Triggers generation of the current traversability map with the current rover position.
+        bool explorationMode;
+        bool generateFrontiers;
+        ugv_nav4d::OrientedBoxConfig area;
+        bool areaValid;
+
+        std::map<int, std::string> numToPlannerState;
+        unsigned int planner_GOAL_INVALID;
+        unsigned int planner_NO_SOLUTION;
+        unsigned int planner_EXCEPTION;
+        unsigned int planner_START_INVALID;
+        
+        /* Triggers the calculation of a new list of goals
          */
-        virtual boost::int32_t generateTravMap();
+        virtual void calculateGoals(::ugv_nav4d::OrientedBoxConfig const & area);
+        
+        /* Starts the AreaExploration-Mode
+        */
+        virtual void resumeExploring(); 
+        
+        /* Stops the AreaExploration-Mode
+        */
+        virtual void stopExploring();
+
+        /* Clears the internal exploration map. All obstacles will be readded by receiving the next trav map.
+         */
+        virtual void clearPlannerMap();
+
+        void setAndWriteBestGoal();
+
+        void writeAllGoals();
+
+        void writeTravMap();
 
     public:
-        /** TaskContext constructor for PathPlanner
+        /** TaskContext constructor for AreaExploration
          * \param name Name of the task. This name needs to be unique to make it identifiable via nameservices.
          * \param initial_state The initial TaskState of the TaskContext. Default is Stopped state.
          */
-        PathPlanner(std::string const& name = "ugv_nav4d::PathPlanner");
+        AreaExploration(std::string const& name = "ugv_nav4d::AreaExploration");
 
-        /** TaskContext constructor for PathPlanner
+        /** TaskContext constructor for AreaExploration
          * \param name Name of the task. This name needs to be unique to make it identifiable for nameservices.
          * \param engine The RTT Execution engine to be used for this task, which serialises the execution of all commands, programs, state machines and incoming events for a task.
-         *
+         * 
          */
-        PathPlanner(std::string const& name, RTT::ExecutionEngine* engine);
+        AreaExploration(std::string const& name, RTT::ExecutionEngine* engine);
 
-        /** Default deconstructor of PathPlanner
+        /** Default deconstructor of AreaExploration
          */
-	~PathPlanner();
+	~AreaExploration();
 
         /** This hook is called by Orocos when the state machine transitions
          * from PreOperational to Stopped. If it returns false, then the
@@ -125,6 +144,8 @@ namespace ugv_nav4d{
          * before calling start() again.
          */
         void cleanupHook();
-
     };
 }
+
+#endif
+
