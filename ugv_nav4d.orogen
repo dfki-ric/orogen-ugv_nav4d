@@ -6,6 +6,8 @@ import_types_from "envire_maps"
 import_types_from "ugv_nav4d/TraversabilityConfig.hpp"
 import_types_from "ugv_nav4d/Config.hpp"
 
+import_types_from "ugv_nav4d/PreComputedMotions.hpp"
+
 import_types_from "sbpl_spline_primitives/SplinePrimitivesConfig.hpp"
 
 using_library "vizkit3d_debug_drawings"
@@ -83,80 +85,6 @@ task_context "PathPlanner" do
     periodic 0.1
 end
 
-task_context "AreaExploration" do
-    needs_configuration
-
-    # --- Properties ---
-
-    property "travConfig", "ugv_nav4d::TraversabilityConfig"
-    property "costConfig", "ugv_nav4d::FrontierGeneratorParameters"
-    property("initialPatchRadius","double", 0.0)
-
-    # if positive, mark a sphere of the given radius as already covered (i.e., filter it out as goal position)
-    property("coverageRadius", "double", 1.0)
-    property("coverageUpdateDistance", "double", 0.05)
-
-    # bound on the distance of the rover to the latest goal, when a new goal should be computed.
-    property("goalReachedThresholdDistance", "double", 0.1)
-
-    # offset vector which translates mls to positive area
-    property "gridOffset", "/base/Vector3d"
-
-    # --- Input ports ---
-
-    input_port "map", spatio_temporal('/maps/grid/MLSMapKalman')
-
-    input_port("pose_samples", "base/samples/RigidBodyState").
-        doc "Robot pose in traversability frame"
-
-    input_port("planner_state", "int")
-
-    input_port("area", "ugv_nav4d/OrientedBoxConfig")
-
-    # --- Output ports ---
-
-    # !!!IMPORTANT: goals are already travConfig.distToGround above the floor!!!
-    output_port('goals_out', 'std/vector<base/samples/RigidBodyState>').
-        doc "Calculated goal, using x and y"
-
-    # !!!IMPORTANT: goals are already travConfig.distToGround above the floor!!!
-    output_port('goal_out_best', 'base/samples/RigidBodyState').
-        doc("Just the first (best) goal of the goal_out list.")
-
-    output_port "tr_map", spatio_temporal('/maps/grid/TraversabilityBaseMap3d')
-    output_port "coverage", "/maps/grid/MLSMapBase"
-
-    dynamic_output_port /^debug_area_explorer/, "/boost/shared_ptr</vizkit3dDebugDrawings/CommandBuffer>"
-
-    # --- Operations ---
-
-    operation("calculateGoals").
-        arg("area", "ugv_nav4d::OrientedBoxConfig").
-        doc("Triggers the calculation of a new list of goals")
-
-    operation("clearPlannerMap").
-        doc("Clears the internal exploration map. All obstacles will be readded by receiving the next trav map.")
-
-    operation("resumeExploring").
-        doc("Resumes the AreaExploration-Mode")
-
-    operation("stopExploring").
-        doc("Stops the AreaExploration-Mode")
-
-    port_driven 'map', 'pose_samples', 'planner_state', 'area'
-
-    runtime_states :NO_MAP,
-        :NO_POSE,
-        :GOT_MAP_AND_POSE,
-        :PLANNING,
-        :EXPLORING,
-        :AREA_EXPLORED,
-        :GOALS_GENERATED
-
-
-    #periodic(1.0)
-end
-
 # Loads a pointcloud from a ply file and generates a MLS from it.
 # (For testing or if you want to use a static map)
 task_context "MapLoader" do
@@ -180,10 +108,4 @@ task_context "MapLoader" do
 	.doc("Writes the map to the port.")
 
 	periodic(1.0)
-end
-
-typekit do
-    export_types 'ugv_nav4d/OrientedBoxConfig'
-    export_types 'ugv_nav4d/Motion'
-    export_types 'std/vector</ugv_nav4d/Motion>'
 end
