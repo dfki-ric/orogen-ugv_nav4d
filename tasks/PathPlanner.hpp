@@ -2,16 +2,17 @@
 
 #include "ugv_nav4d/PathPlannerBase.hpp"
 #include <memory>
+#include <Eigen/Core>
 
 namespace ugv_nav4d{
 
     class Planner;
-        
+
     /*! \class PathPlanner
      * \brief The task context provides and requires services. It uses an ExecutionEngine to perform its functions.
      * Essential interfaces are operations, data flow ports and properties. These interfaces have been defined using the oroGen specification.
      * In order to modify the interfaces you should (re)use oroGen and rely on the associated workflow.
-     * 
+     *
      * \details
      * The name of a TaskContext is primarily defined via:
      \verbatim
@@ -41,9 +42,13 @@ namespace ugv_nav4d{
          * Planning will start once a map has been received
          * @param start Start position of the robot body in map frame (this should be config.stepHeight above ground)
          * @param goal Goal position of the robot body in map frame (this should be config.stepHeight above ground)
-         * 
+         *
          */
         virtual boost::int32_t triggerPathPlanning(::base::samples::RigidBodyState const & start, ::base::samples::RigidBodyState const & goal);
+        
+        /** Triggers generation of the current traversability map with the current rover position.
+         */
+        virtual boost::int32_t generateTravMap();
 
     public:
         /** TaskContext constructor for PathPlanner
@@ -55,7 +60,7 @@ namespace ugv_nav4d{
         /** TaskContext constructor for PathPlanner
          * \param name Name of the task. This name needs to be unique to make it identifiable for nameservices.
          * \param engine The RTT Execution engine to be used for this task, which serialises the execution of all commands, programs, state machines and incoming events for a task.
-         * 
+         *
          */
         PathPlanner(std::string const& name, RTT::ExecutionEngine* engine);
 
@@ -120,9 +125,6 @@ namespace ugv_nav4d{
          * before calling start() again.
          */
         void cleanupHook();
-        
+
     };
 }
-
-
-
