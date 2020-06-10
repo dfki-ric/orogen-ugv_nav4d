@@ -4,7 +4,7 @@ import_types_from "base"
 import_types_from "envire_maps"
 
 import_types_from "ugv_nav4d/TraversabilityConfig.hpp"
-import_types_from "ugv_nav4d/Config.hpp"
+import_types_from "ugv_nav4d/Mobility.hpp"
 
 import_types_from "ugv_nav4d/PreComputedMotions.hpp"
 
