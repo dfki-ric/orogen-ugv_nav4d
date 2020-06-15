@@ -95,11 +95,7 @@ bool PathPlanner::configureHook()
 
     V3DD::CONFIGURE_DEBUG_DRAWINGS_USE_PORT(this, channels_filtered);
 
-    Eigen::Affine3d mls2Ground(Eigen::Translation3d(_gridOffset.rvalue()));
-
-    planner.reset(new Planner(_primConfig.get(), _travConfig.get(), _mobilityConfig.get(), _plannerConfig.get(), mls2Ground));
-
-
+    planner.reset(new Planner(_primConfig.get(), _travConfig.get(), _mobilityConfig.get(), _plannerConfig.get()));
     planner->setTravMapCallback([&] ()
     {
         //this callback will be called whenever the planner has generated a new travmap.
@@ -139,7 +135,6 @@ void PathPlanner::updateHook()
     } else if(map_status == RTT::NewData)
     {
         gotMap = true;
-        map.data.translate(_gridOffset.rvalue());
         setIfNotSet(SET_UP_MAP_AND_SPLINES);
         planner->updateMap(map.getData());
         setIfNotSet(GOT_MAP);

@@ -33,7 +33,6 @@ task_context "PathPlanner" do
     property("initialPatchRadius","double", 0.0)
     property("dumpOnError","int", 0)
     property("dumpOnSuccess","int", 0)
-    property "gridOffset", "/base/Vector3d"
 
     # --- Input ports ---
 
