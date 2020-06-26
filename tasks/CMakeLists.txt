@@ -1,11 +1,6 @@
 # Generated from orogen/lib/orogen/templates/tasks/CMakeLists.txt
 
 include(ugv_nav4dTaskLib)
-add_definitions(-DENABLE_DEBUG_DRAWINGS)
-add_definitions(-DUSE_PORTS)
-
-
-
 
 ADD_LIBRARY(${UGV_NAV4D_TASKLIB_NAME} SHARED 
     ${UGV_NAV4D_TASKLIB_SOURCES})
@@ -18,7 +13,6 @@ TARGET_LINK_LIBRARIES(${UGV_NAV4D_TASKLIB_NAME}
     ${OrocosRTT_LIBRARIES}
     ${QT_LIBRARIES}
     ${UGV_NAV4D_TASKLIB_DEPENDENT_LIBRARIES}
-    vizkit3d_debug_drawings
     trajectory_follower)
 SET_TARGET_PROPERTIES(${UGV_NAV4D_TASKLIB_NAME}
     PROPERTIES LINK_INTERFACE_LIBRARIES "${UGV_NAV4D_TASKLIB_INTERFACE_LIBRARIES}")
