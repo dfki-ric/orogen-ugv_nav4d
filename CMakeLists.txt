@@ -1,10 +1,7 @@
 PROJECT(ugv_nav4d)
 cmake_minimum_required(VERSION 2.6)
-
-# Default to C++14 (PCL requirement)
-if(NOT CMAKE_CXX_STANDARD)
-  set(CMAKE_CXX_STANDARD 14)
-endif()
+set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 add_definitions(-DENABLE_DEBUG_DRAWINGS)
 
