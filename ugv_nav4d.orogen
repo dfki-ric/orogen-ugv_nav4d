@@ -37,7 +37,7 @@ task_context "PathPlanner" do
 
     # --- Input ports ---
 
-    input_port "map", spatio_temporal('/maps/grid/MLSMapKalman')
+    input_port "map", '/maps/grid/MLSMapSloped'
     input_port "start_pose_samples", "base/samples/RigidBodyState"  # should be travConfig.distToGround above the floor
 
     # Writing in one of those ports triggers the path planning, if map and start_pose_samples are given.
@@ -89,7 +89,7 @@ end
 # (For testing or if you want to use a static map)
 task_context "MapLoader" do
 
-	output_port('map', spatio_temporal('maps/grid/MLSMapKalman'))
+        output_port('map', spatio_temporal('maps/grid/MLSMapSloped'))
 	.doc("Generated MLS map, request via publishMap operation.")
 
 	property('path', 'std/string')
