@@ -61,7 +61,7 @@ bool MapLoader::loadMls(const std::string& path)
 
             map.frame_id = _map_frame;
             map.time = base::Time::now();
-            map.data = maps::grid::MLSMapKalman(gridSize, cellSize, _mls_config);
+            map.data = maps::grid::MLSMapSloped(gridSize, cellSize, _mls_config);
             map.data.translate(offset);
             map.data.mergePointCloud(*cloud, base::Transform3d::Identity());
         }

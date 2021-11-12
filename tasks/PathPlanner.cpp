@@ -125,7 +125,7 @@ bool PathPlanner::startHook()
 void PathPlanner::updateHook()
 {
 
-    envire::core::SpatioTemporal<maps::grid::MLSMapKalman> map;
+    maps::grid::MLSMapSloped map;
     auto map_status = _map.readNewest(map, false);
 
     if(map_status == RTT::NoData)
@@ -136,7 +136,7 @@ void PathPlanner::updateHook()
     {
         gotMap = true;
         setIfNotSet(SET_UP_MAP_AND_SPLINES);
-        planner->updateMap(map.getData());
+        planner->updateMap(map);
         setIfNotSet(GOT_MAP);
     }
 
