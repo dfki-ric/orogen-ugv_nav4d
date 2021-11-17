@@ -2,9 +2,10 @@
 
 #include "MapLoader.hpp"
 
-#include <pcl/io/ply_io.h>
+#include "happly.h"
 #include <pcl/common/common.h>
 #include <pcl/common/transforms.h>
+
 
 using namespace ugv_nav4d;
 
@@ -38,9 +39,19 @@ bool MapLoader::loadMls(const std::string& path)
     {
         std::cout << "Loading PLY" << std::endl;
         pcl::PointCloud<pcl::PointXYZ>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZ>());
-        pcl::PLYReader plyReader;
-        if(plyReader.read(path, *cloud) >= 0)
-        {
+
+        happly::PLYData plyReader(path);
+        std::vector<std::array<double, 3>> vPos = plyReader.getVertexPositions();
+        
+        if (vPos.size()) {
+            pcl::PointXYZ pclpoint;
+            for (auto &pos : vPos) {
+                pclpoint.x = pos[0];
+                pclpoint.y = pos[1];
+                pclpoint.z = pos[2];
+                cloud->points.push_back(pclpoint);
+            }
+
             pcl::PointXYZ mi, ma; 
             pcl::getMinMax3D (*cloud, mi, ma);
       
@@ -64,8 +75,9 @@ bool MapLoader::loadMls(const std::string& path)
             map.data = maps::grid::MLSMapKalman(gridSize, cellSize, _mls_config);
             map.data.translate(offset);
             map.data.mergePointCloud(*cloud, base::Transform3d::Identity());
+            return true;
         }
-        return true;
+        return false;
     }
     else
     {
@@ -82,8 +94,11 @@ bool MapLoader::configureHook()
         return false;
     
     mapLoaded = loadMls(_path.get());
-    if(mapLoaded)
+    if(mapLoaded) {
         publishMap();
+    } else { 
+        return false;
+    }
     
     return true;
 }
