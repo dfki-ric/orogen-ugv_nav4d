@@ -1,5 +1,10 @@
 name "ugv_nav4d"
 
+using_library "ugv_nav4d"
+using_library "trajectory_follower"
+using_library "base-lib"
+using_library "orocos_cpp"
+
 import_types_from "base"
 import_types_from "envire_maps"
 
@@ -13,10 +18,6 @@ import_types_from "sbpl_spline_primitives/SplinePrimitivesConfig.hpp"
 using_library "vizkit3d_debug_drawings"
 import_types_from "vizkit3d_debug_drawings"
 
-using_library "ugv_nav4d"
-using_library "trajectory_follower"
-using_library "base-lib"
-using_library "orocos_cpp"
 
 import_types_from "trajectory_follower/SubTrajectory.hpp"
 
