@@ -100,8 +100,11 @@ bool PathPlanner::configureHook()
     {
         //this callback will be called whenever the planner has generated a new travmap.
         envire::core::SpatioTemporal<maps::grid::TraversabilityBaseMap3d> st(planner->getTraversabilityMap().copyCast<maps::grid::TraversabilityNodeBase*>());
+        envire::core::SpatioTemporal<maps::grid::TraversabilityBaseMap3d> ob(planner->getObstacleMap().copyCast<maps::grid::TraversabilityNodeBase*>());
         st.setFrameID("planner");
+        ob.setFrameID("planner");
         _tr_map.write(st);
+        _ob_map.write(ob);
     });
 
     V3DD::FLUSH_DRAWINGS();
