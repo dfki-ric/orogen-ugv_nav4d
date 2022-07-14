@@ -8,7 +8,7 @@
   <logo>http://</logo>
   <depend package="tools/orocos_cpp" />
   <depend package="planning/ugv_nav4d" />
-  <depend package="envire/orogen/envire_maps" />  
+  <depend package="slam/maps" />  
   <depend package="gui/orogen/vizkit3d_debug_drawings" />  
   <depend package="control/trajectory_follower" />
   <depend package="drivers/orogen/transformer" />

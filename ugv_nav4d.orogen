@@ -6,7 +6,7 @@ using_library "base-lib"
 using_library "orocos_cpp"
 
 import_types_from "base"
-import_types_from "envire_maps"
+import_types_from "maps"
 
 import_types_from "ugv_nav4d/TraversabilityConfig.hpp"
 import_types_from "ugv_nav4d/Mobility.hpp"
@@ -84,6 +84,4 @@ task_context "PathPlanner" do
 
 
     periodic 0.1
-end
-
 end
