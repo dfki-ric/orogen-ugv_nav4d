@@ -97,8 +97,8 @@ bool PathPlanner::configureHook()
     planner->setTravMapCallback([&] ()
     {
         //this callback will be called whenever the planner has generated a new travmap.
-        _tr_map.write(planner->getTraversabilityMap());
-        _ob_map.write(planner->getObstacleMap());
+        _tr_map.write(planner->getTraversabilityMap().copyCast<maps::grid::TraversabilityNodeBase*>());
+        _ob_map.write(planner->getObstacleMap().copyCast<maps::grid::TraversabilityNodeBase*>());
     });
 
     V3DD::FLUSH_DRAWINGS();
