@@ -6,6 +6,13 @@
   <license></license>
   <url>http://</url>
   <logo>http://</logo>
+  <stage>1</stage>
+  <keywords>
+    <keyword>Planning</keyword>
+    <keyword>motion primitives</keyword>
+    <keyword>sampling based motion planner</keyword>
+    <keyword>Multi level surface planner</keyword>
+  </keywords>
   <depend package="tools/orocos_cpp" />
   <depend package="planning/ugv_nav4d" />
   <depend package="envire/orogen/envire_maps" />  
