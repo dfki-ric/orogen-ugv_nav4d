@@ -1,6 +1,6 @@
 <package>
   <description brief="A XYZ Theta planner for UGVs">
-  
+
   </description>
   <author>Janosch Machowinski/Janosch.Machowinski@dfki.de</author>
   <license></license>
@@ -15,8 +15,8 @@
   </keywords>
   <depend package="tools/orocos_cpp" />
   <depend package="planning/ugv_nav4d" />
-  <depend package="envire/orogen/envire_maps" />  
-  <depend package="gui/orogen/vizkit3d_debug_drawings" />  
+  <depend package="slam/orogen/maps" />  
+  <depend package="gui/orogen/vizkit3d_debug_drawings" />
   <depend package="control/trajectory_follower" />
   <depend package="drivers/orogen/transformer" />
 </package>

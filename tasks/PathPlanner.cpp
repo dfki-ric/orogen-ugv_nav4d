@@ -2,7 +2,6 @@
 
 #include "PathPlanner.hpp"
 #include <ugv_nav4d/Planner.hpp>
-#include <envire_core/items/SpatioTemporal.hpp>
 #include <vizkit3d_debug_drawings/DebugDrawing.hpp>
 #include <trajectory_follower/SubTrajectory.hpp>
 
@@ -18,7 +17,6 @@ using Eigen::Affine3d;
 using Eigen::Translation3d;
 using maps::grid::TraversabilityNodeBase;
 using maps::grid::TraversabilityBaseMap3d;
-using envire::core::SpatioTemporal;
 using trajectory_follower::SubTrajectory;
 
 PathPlanner::PathPlanner(std::string const& name)
@@ -99,12 +97,8 @@ bool PathPlanner::configureHook()
     planner->setTravMapCallback([&] ()
     {
         //this callback will be called whenever the planner has generated a new travmap.
-        envire::core::SpatioTemporal<maps::grid::TraversabilityBaseMap3d> st(planner->getTraversabilityMap().copyCast<maps::grid::TraversabilityNodeBase*>());
-        envire::core::SpatioTemporal<maps::grid::TraversabilityBaseMap3d> ob(planner->getObstacleMap().copyCast<maps::grid::TraversabilityNodeBase*>());
-        st.setFrameID("planner");
-        ob.setFrameID("planner");
-        _tr_map.write(st);
-        _ob_map.write(ob);
+        _tr_map.write(planner->getTraversabilityMap().copyCast<maps::grid::TraversabilityNodeBase*>());
+        _ob_map.write(planner->getObstacleMap().copyCast<maps::grid::TraversabilityNodeBase*>());
     });
 
     V3DD::FLUSH_DRAWINGS();
