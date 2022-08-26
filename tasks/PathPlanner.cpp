@@ -4,6 +4,7 @@
 #include <ugv_nav4d/Planner.hpp>
 #include <vizkit3d_debug_drawings/DebugDrawing.hpp>
 #include <trajectory_follower/SubTrajectory.hpp>
+#include <base-logging/Logging.hpp>
 
 #include <boost/archive/binary_iarchive.hpp>
 #include <boost/archive/binary_oarchive.hpp>
@@ -72,7 +73,7 @@ int32_t PathPlanner::generateTravMap()
         initalPatchAdded = true;
     }
 
-    std::cout << "PathPlanner: Manually generating travMap..." << std::endl;
+    LOG_INFO_S << "PathPlanner: Manually generating travMap...";
     planner->genTravMap(pose);
     return 0;
 }
@@ -155,7 +156,7 @@ void PathPlanner::updateHook()
 
     if(executePlanning)
     {
-        std::cout << "PathPlanner: Executing planning..." << std::endl;
+        LOG_INFO_S << "PathPlanner: Executing planning...";
         _planning_start.write(start_pose);
         _planning_goal.write(stop_pose);
 
