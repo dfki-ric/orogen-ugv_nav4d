@@ -8,7 +8,8 @@ using_library "vizkit3d_debug_drawings"
 
 import_types_from "base"
 import_types_from "maps"
-import_types_from "ugv_nav4d/TraversabilityConfig.hpp"
+import_types_from "traversability_generator3d/TraversabilityConfig.hpp"
+import_types_from "ugv_nav4d/PlannerConfig.hpp"
 import_types_from "ugv_nav4d/Mobility.hpp"
 import_types_from "ugv_nav4d/PreComputedMotions.hpp"
 import_types_from "sbpl_spline_primitives/SplinePrimitivesConfig.hpp"
@@ -19,9 +20,10 @@ task_context "PathPlanner" do
     needs_configuration
 
     # --- Properties ---
+
     property "maxTime", "base::Time"
     property "primConfig", "sbpl_spline_primitives::SplinePrimitivesConfig"
-    property "travConfig", "ugv_nav4d::TraversabilityConfig"
+    property "travConfig", "traversability_generator3d::TraversabilityConfig"
     property "mobilityConfig", "ugv_nav4d::Mobility"
     property "plannerConfig", "ugv_nav4d::PlannerConfig"
     property("initialPatchRadius","double", 0.0)
@@ -29,6 +31,7 @@ task_context "PathPlanner" do
     property("dumpOnSuccess","int", 0)
 
     # --- Input ports ---
+
     input_port "map", '/maps/grid/MLSMapSloped'
     input_port "start_pose_samples", "base/samples/RigidBodyState"  # should be travConfig.distToGround above the floor
     # Writing one of those ports triggers the path planning, if map and start_pose_samples are given.
@@ -36,17 +39,22 @@ task_context "PathPlanner" do
     input_port "goal_pose_absolute", "base/samples/RigidBodyState"   # should be travConfig.distToGround above the floor
 
     # --- Output ports ---
+
     output_port "trajectory2D", "std::vector<base/Trajectory>"
     output_port "trajectory3D", "std::vector<base/Trajectory>"
     output_port "detailedTrajectory2D", "std::vector<trajectory_follower/SubTrajectory>"
     output_port "detailedTrajectory3D", "std::vector<trajectory_follower/SubTrajectory>"
+
     output_port "tr_map", '/maps/grid/TraversabilityBaseMap3d'
     output_port "ob_map", '/maps/grid/TraversabilityBaseMap3d'
+
     output_port "planning_start", "base/samples/RigidBodyState"
     output_port "planning_goal", "base/samples/RigidBodyState"
+
     dynamic_output_port /^debug_ugv_nav4d/, "/boost/shared_ptr</vizkit3dDebugDrawings/CommandBuffer>"
 
     # --- Operations ---
+
     operation("triggerPathPlanning").
         arg("start_position", "base/samples/RigidBodyState"). # should be travConfig.distToGround above the floor
         arg("goal_position", "base/samples/RigidBodyState"). # should be travConfig.distToGround above the floor
@@ -67,6 +75,7 @@ task_context "PathPlanner" do
         :TRAVERSABILITY_MAP_GENERATED,
         :NO_SOLUTION,
         :FOUND_SOLUTION
+
 
     periodic 0.1
 end

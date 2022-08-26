@@ -45,7 +45,7 @@ namespace ugv_nav4d{
          *
          */
         virtual boost::int32_t triggerPathPlanning(::base::samples::RigidBodyState const & start, ::base::samples::RigidBodyState const & goal);
-        
+
         /** Triggers generation of the current traversability map with the current rover position.
          */
         virtual boost::int32_t generateTravMap();
