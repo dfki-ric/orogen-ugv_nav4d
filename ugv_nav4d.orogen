@@ -56,14 +56,18 @@ task_context "PathPlanner" do
     # --- Operations ---
 
     operation("triggerPathPlanning").
-        arg("start_position", "base/samples/RigidBodyState"). # should be travConfig.distToGround above the floor
-        arg("goal_position", "base/samples/RigidBodyState"). # should be travConfig.distToGround above the floor
-        returns("int").
-        doc("Triggers planning of a new path")
+    arg("start_position", "base/samples/RigidBodyState"). # should be travConfig.distToGround above the floor
+    arg("goal_position", "base/samples/RigidBodyState"). # should be travConfig.distToGround above the floor
+    returns("int").
+    doc("Triggers planning of a new path")
 
     operation("generateTravMap").
-        returns("int").
-        doc("Triggers generation of the traversability map")
+    returns("int").
+    doc("Triggers generation of the traversability map")
+
+    operation("findTrajectoryOutOfObstacle").
+    returns("int").
+    doc("Triggers generation of a recovery trajectory from a START_INVALID start pose")
 
     runtime_states :NO_MAP,
         :SET_UP_MAP_AND_SPLINES,

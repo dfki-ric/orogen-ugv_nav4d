@@ -78,6 +78,24 @@ int32_t PathPlanner::generateTravMap()
     return 0;
 }
 
+boost::int32_t PathPlanner::findTrajectoryOutOfObstacle()
+{
+    std::cout << "Current yaw "  << start_pose.getYaw() << std::endl;
+
+    base::Vector3d new_start_position;
+    double new_start_theta;
+    trajectory_follower::SubTrajectory trajectory2D;
+
+    _start_pose_samples.readNewest(start_pose,false);
+    Eigen::Affine3d ground2Body(Eigen::Affine3d::Identity());
+    ground2Body.translation() = Eigen::Vector3d(0, 0, -_travConfig.get().distToGround);
+
+    trajectory2D = *(planner->getEnv()->findTrajectoryOutOfObstacle(start_pose.position, start_pose.getYaw(), ground2Body, new_start_position, new_start_theta));
+
+    _detailedTrajectory2D.write({trajectory2D});
+    return 0;
+}
+
 bool PathPlanner::configureHook()
 {
     std::vector<std::string> channels = V3DD::GET_DECLARED_CHANNELS();

@@ -50,6 +50,11 @@ namespace ugv_nav4d{
          */
         virtual boost::int32_t generateTravMap();
 
+        /** Triggers generation of a recovery trajectory from an invalid start pose.
+         */
+        virtual boost::int32_t findTrajectoryOutOfObstacle();
+
+
     public:
         /** TaskContext constructor for PathPlanner
          * \param name Name of the task. This name needs to be unique to make it identifiable via nameservices.
