@@ -64,6 +64,12 @@ task_context "PathPlanner" do
     operation("generateTravMap").
         returns("int").
         doc("Triggers generation of the traversability map")
+        
+    operation("isTraversable").
+        arg("patch_position", "base/Vector3d"). 
+        returns("bool").
+        doc("Triggers generation of the traversability map")
+        
 
     runtime_states :NO_MAP,
         :SET_UP_MAP_AND_SPLINES,

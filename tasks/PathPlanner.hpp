@@ -50,6 +50,10 @@ namespace ugv_nav4d{
          */
         virtual boost::int32_t generateTravMap();
 
+        /** Returns the traversability type of patch
+         */
+        virtual bool isTraversable(::base::Vector3d const & patch_position);
+
     public:
         /** TaskContext constructor for PathPlanner
          * \param name Name of the task. This name needs to be unique to make it identifiable via nameservices.
