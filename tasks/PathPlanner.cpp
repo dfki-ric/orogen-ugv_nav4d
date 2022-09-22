@@ -107,6 +107,39 @@ boost::int32_t PathPlanner::findTrajectoryOutOfObstacle()
     return 0;
 }
 
+bool PathPlanner::isTraversable(::base::Vector3d const & patch_position){
+
+    if(!gotMap){
+        LOG_INFO_S << "PathPlanner::getPatchType: No map is generated !";        
+        return false;
+    }    
+
+    double z{0.0};
+    ::base::Vector3d temp = patch_position;
+    if (planner->getEnv()->getMlsMap().getClosestSurfacePos(patch_position, z)){
+        temp.z() = z;
+    }
+
+    ::maps::grid::Index idx;
+    if(!planner->getTraversabilityMap().toGrid(temp, idx))
+    {
+        LOG_INFO_S << "PathPlanner::getPatchType: position outside of map !";
+        return false;
+    }
+
+    auto &trList(planner->getTraversabilityMap().at(idx));
+
+    //check if we got an existing node
+    for(traversability_generator3d::TravGenNode *snode : trList)
+    {
+        if (snode->getType() == TraversabilityNodeBase::TRAVERSABLE){
+            return true;
+        }
+    }
+    return false;
+}
+
+
 bool PathPlanner::configureHook()
 {
     std::vector<std::string> channels = V3DD::GET_DECLARED_CHANNELS();
