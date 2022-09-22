@@ -50,7 +50,7 @@ namespace ugv_nav4d{
          */
         virtual boost::int32_t generateTravMap();
 
-        /** Returns the traversability type of patch
+        /** Returns true if the patch is traversable
          */
         virtual bool isTraversable(::base::Vector3d const & patch_position);
 
