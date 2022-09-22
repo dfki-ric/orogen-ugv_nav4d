@@ -80,19 +80,30 @@ int32_t PathPlanner::generateTravMap()
 
 boost::int32_t PathPlanner::findTrajectoryOutOfObstacle()
 {
-    std::cout << "Current yaw "  << start_pose.getYaw() << std::endl;
-
     base::Vector3d new_start_position;
     double new_start_theta;
-    trajectory_follower::SubTrajectory trajectory2D;
-
-    _start_pose_samples.readNewest(start_pose,false);
+    std::shared_ptr<trajectory_follower::SubTrajectory> trajectory2D;
     Eigen::Affine3d ground2Body(Eigen::Affine3d::Identity());
+
+    _start_pose_samples.read(start_pose);
+
+    if(!base::samples::RigidBodyState::isValidValue(start_pose.position) || 
+            !base::samples::RigidBodyState::isValidValue(start_pose.orientation)){
+
+        LOG_INFO_S << "Invalid start_pose_samples. Recovery behavior is aborted!!";
+        return 0;
+    }
+
     ground2Body.translation() = Eigen::Vector3d(0, 0, -_travConfig.get().distToGround);
+    trajectory2D = planner->getEnv()->findTrajectoryOutOfObstacle(start_pose.position, start_pose.getYaw(), ground2Body, new_start_position, new_start_theta);
 
-    trajectory2D = *(planner->getEnv()->findTrajectoryOutOfObstacle(start_pose.position, start_pose.getYaw(), ground2Body, new_start_position, new_start_theta));
+    if (trajectory2D != nullptr){
+        LOG_INFO_S << "FOUND WAY OUT!";
+        _detailedTrajectory2D.write(std::vector<trajectory_follower::SubTrajectory>{*trajectory2D});
+        return 1;
+    }
 
-    _detailedTrajectory2D.write({trajectory2D});
+    LOG_INFO_S << "NO WAY OUT, ROBOT IS STUCK!";
     return 0;
 }
 
