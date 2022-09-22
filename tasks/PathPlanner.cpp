@@ -94,6 +94,7 @@ boost::int32_t PathPlanner::findTrajectoryOutOfObstacle()
         return 0;
     }
 
+    //TODO: Use the closest surface patch instead of the hardcoded distToGround param. The param makes sense to be used only for the initial patch generation. 
     ground2Body.translation() = Eigen::Vector3d(0, 0, -_travConfig.get().distToGround);
     trajectory2D = planner->getEnv()->findTrajectoryOutOfObstacle(start_pose.position, start_pose.getYaw(), ground2Body, new_start_position, new_start_theta);
 
