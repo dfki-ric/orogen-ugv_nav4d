@@ -124,7 +124,7 @@ bool PathPlanner::findTrajectoryOutOfObstacle()
         startPose.position.x() = start_pose.position.x();
         startPose.position.y() = start_pose.position.y();
         startPose.orientation  = actualHeading;
-        
+
         base::Pose2D goalPose;
         goalPose.position.x() = start_pose.position.x();
         goalPose.position.y() = start_pose.position.y();
@@ -282,6 +282,43 @@ void PathPlanner::updateHook()
         std::vector<SubTrajectory> trajectory2D, trajectory3D;
 
         Planner::PLANNING_RESULT res = planner->plan(_maxTime.value(), start_pose, stop_pose, trajectory2D, trajectory3D, _dumpOnError.get(), _dumpOnSuccess.get());
+
+        if ((start_pose.position - stop_pose.position).norm() < 0.05 && res == Planner::PLANNING_RESULT::NO_SOLUTION){
+            trajectory_follower::SubTrajectory subtraj;
+            subtraj.driveMode = trajectory_follower::DriveMode::ModeTurnOnTheSpot;
+            double actualHeading  = start_pose.getYaw();    
+            double desiredHeading = stop_pose.getYaw();
+
+            if (actualHeading < 0)
+                actualHeading = 2*M_PI + actualHeading;
+
+            if (desiredHeading < 0)
+                desiredHeading = 2*M_PI + desiredHeading; 
+
+            std::vector<base::Angle> angles;
+            angles.emplace_back(base::Angle::fromRad(actualHeading));
+            angles.emplace_back(base::Angle::fromRad(desiredHeading));
+
+            base::Pose2D startPose;
+            startPose.position.x() = start_pose.position.x();
+            startPose.position.y() = start_pose.position.y();
+            startPose.orientation  = actualHeading;
+
+            base::Pose2D goalPose;
+            goalPose.position.x() = start_pose.position.x();
+            goalPose.position.y() = start_pose.position.y();
+            goalPose.orientation  = desiredHeading;
+
+            subtraj.interpolate(startPose,angles);
+            subtraj.startPose     = startPose;
+            subtraj.goalPose      = goalPose; 
+
+            if (std::abs(actualHeading-desiredHeading) > 0.02){
+                //HACK because the planner fails to plan a pure pointturn
+                res = Planner::PLANNING_RESULT::FOUND_SOLUTION;
+                _detailedTrajectory2D.write(std::vector<trajectory_follower::SubTrajectory>{subtraj});                
+            }    
+        }
 
         // Create vectors of base trajectories for obtained trajectories which can be written
         // to the original output ports.
