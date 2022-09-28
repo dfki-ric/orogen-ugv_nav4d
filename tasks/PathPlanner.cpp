@@ -13,7 +13,7 @@
 
 using namespace ugv_nav4d;
 
-#define ENABLE_V3DD_DRAWINGS false
+//#define ENABLE_V3DD_DRAWINGS
 
 using Eigen::Vector3d;
 using Eigen::Affine3d;
@@ -195,7 +195,7 @@ bool PathPlanner::isTraversable(::base::Vector3d const & patch_position){
 bool PathPlanner::configureHook()
 {
 
-#if ENABLE_V3DD_DRAWINGS
+#ifdef ENABLE_V3DD_DRAWINGS
     std::vector<std::string> channels = V3DD::GET_DECLARED_CHANNELS();
     std::vector<std::string> channels_filtered;
     for(const std::string& channel : channels)
@@ -362,7 +362,7 @@ void PathPlanner::updateHook()
 
         executePlanning = false;
     }
-#if ENABLE_V3DD_DRAWINGS
+#ifdef ENABLE_V3DD_DRAWINGS
     V3DD::FLUSH_DRAWINGS();
 #endif    
     PathPlannerBase::updateHook();
