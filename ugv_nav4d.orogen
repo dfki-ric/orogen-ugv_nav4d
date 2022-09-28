@@ -74,14 +74,6 @@ task_context "PathPlanner" do
         returns("bool").
         doc("Returns true if the patch at patch_position is traversable")        
 
-    operation("getMotion").
-        arg("start", "/base/samples/RigidBodyState").
-        arg("end", "/base/samples/RigidBodyState").
-        arg("motion_type", "/ugv_nav4d/Motion/Type").
-        arg("minimum_curvature", "double"). 
-        returns("bool").
-        doc("Returns a trajectory of a specified type and curvature")            
-
     runtime_states :NO_MAP,
         :SET_UP_MAP_AND_SPLINES,
         :GOT_MAP,

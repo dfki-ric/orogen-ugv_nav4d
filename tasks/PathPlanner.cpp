@@ -145,60 +145,6 @@ bool PathPlanner::isTraversable(::base::Vector3d const & patch_position){
     return false;
 }
 
-bool PathPlanner::getMotion(::base::samples::RigidBodyState const & start,
-                            ::base::samples::RigidBodyState const & end,
-                            ::ugv_nav4d::Motion::Type const & motion_type,
-                            double minimum_curvature){
-
-
-    std::cout << "Start : " << start.position.transpose() << std::endl;                                                                             
-    std::cout << "End : " << end.position.transpose() << std::endl;   
-    std::cout << "Motion type : " << motion_type << std::endl;                                                                             
-    std::cout << "Curvature : " << minimum_curvature << std::endl;
-
-    if(!gotMap){
-        LOG_INFO_S << "PathPlanner::getMotion: No map is generated !";        
-        //TODO return;
-    }    
-
-    std::shared_ptr<trajectory_follower::SubTrajectory> trajectory2D;
-    Eigen::Affine3d ground2Body(Eigen::Affine3d::Identity());
-
-    if(!base::samples::RigidBodyState::isValidValue(start.position) || 
-            !base::samples::RigidBodyState::isValidValue(start.orientation)){
-
-        LOG_INFO_S << "Invalid start. Trajectory can not be found!!";
-        //TODO return 0;
-    }
-
-    if(!base::samples::RigidBodyState::isValidValue(end.position) || 
-            !base::samples::RigidBodyState::isValidValue(end.orientation)){
-
-        LOG_INFO_S << "Invalid end. Trajectory can not be found!!";
-        //TODO return 0;
-    }
-
-    //TODO: Use the closest surface patch instead of the hardcoded distToGround param. The param makes sense to be used only for the initial patch generation. 
-    ground2Body.translation() = Eigen::Vector3d(0, 0, -_travConfig.get().distToGround);
-
-    trajectory2D = planner->getEnv()->findTrajectory(start.position,
-                                                     start.getYaw(), 
-                                                     end.position, 
-                                                     end.getYaw(), 
-                                                     ground2Body, 
-                                                     minimum_curvature, 
-                                                     motion_type);
-
-    if (trajectory2D != nullptr){
-        LOG_INFO_S << "MOTION FOUND!";
-        _detailedTrajectory2D.write(std::vector<trajectory_follower::SubTrajectory>{*trajectory2D});
-        return 1;
-    }
-
-    LOG_INFO_S << "NO MOTION FOUND!";
-    //return 0;
-}
-
 bool PathPlanner::configureHook()
 {
     std::vector<std::string> channels = V3DD::GET_DECLARED_CHANNELS();

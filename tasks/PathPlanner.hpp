@@ -59,14 +59,6 @@ namespace ugv_nav4d{
          */
         virtual bool isTraversable(::base::Vector3d const & patch_position);
 
-        /** Returns a trajectory based on the specified curvature and motion type
-         */
-        virtual bool getMotion(::base::samples::RigidBodyState const & start,
-                                                                                ::base::samples::RigidBodyState const & end, 
-                                                                                ::ugv_nav4d::Motion::Type const & motion_type, 
-                                                                                double minimum_curvature);
-
-
     public:
         /** TaskContext constructor for PathPlanner
          * \param name Name of the task. This name needs to be unique to make it identifiable via nameservices.
