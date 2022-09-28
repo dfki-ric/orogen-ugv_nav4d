@@ -13,6 +13,8 @@
 
 using namespace ugv_nav4d;
 
+#define ENABLE_V3DD_DRAWINGS false
+
 using Eigen::Vector3d;
 using Eigen::Affine3d;
 using Eigen::Translation3d;
@@ -192,9 +194,10 @@ bool PathPlanner::isTraversable(::base::Vector3d const & patch_position){
 
 bool PathPlanner::configureHook()
 {
+
+#if ENABLE_V3DD_DRAWINGS
     std::vector<std::string> channels = V3DD::GET_DECLARED_CHANNELS();
     std::vector<std::string> channels_filtered;
-
     for(const std::string& channel : channels)
     {
         //check if it contains ugv
@@ -203,8 +206,9 @@ bool PathPlanner::configureHook()
             channels_filtered.push_back(channel);
         }
     }
-
     V3DD::CONFIGURE_DEBUG_DRAWINGS_USE_PORT(this, channels_filtered);
+    V3DD::FLUSH_DRAWINGS();
+#endif    
 
     planner.reset(new Planner(_primConfig.get(), _travConfig.get(), _mobilityConfig.get(), _plannerConfig.get()));
     planner->setTravMapCallback([&] ()
@@ -213,8 +217,6 @@ bool PathPlanner::configureHook()
         _tr_map.write(planner->getTraversabilityMap().copyCast<maps::grid::TraversabilityNodeBase*>());
         _ob_map.write(planner->getObstacleMap().copyCast<maps::grid::TraversabilityNodeBase*>());
     });
-
-    V3DD::FLUSH_DRAWINGS();
 
     if (! PathPlannerBase::configureHook())
         return false;
@@ -283,6 +285,7 @@ void PathPlanner::updateHook()
 
         Planner::PLANNING_RESULT res = planner->plan(_maxTime.value(), start_pose, stop_pose, trajectory2D, trajectory3D, _dumpOnError.get(), _dumpOnSuccess.get());
 
+        //HACK: The planner fails to find a pure pointturn but we can still create a subtrajectory of a pure pointturn
         if ((start_pose.position - stop_pose.position).norm() < 0.05 && res == Planner::PLANNING_RESULT::NO_SOLUTION){
             trajectory_follower::SubTrajectory subtraj;
             subtraj.driveMode = trajectory_follower::DriveMode::ModeTurnOnTheSpot;
@@ -313,6 +316,7 @@ void PathPlanner::updateHook()
             subtraj.startPose     = startPose;
             subtraj.goalPose      = goalPose; 
 
+            //Only do a pointturn if heading diff is more than 1 degrees
             if (std::abs(actualHeading-desiredHeading) > 0.02){
                 //HACK because the planner fails to plan a pure pointturn
                 res = Planner::PLANNING_RESULT::FOUND_SOLUTION;
@@ -358,8 +362,9 @@ void PathPlanner::updateHook()
 
         executePlanning = false;
     }
-
+#if ENABLE_V3DD_DRAWINGS
     V3DD::FLUSH_DRAWINGS();
+#endif    
     PathPlannerBase::updateHook();
 }
 void PathPlanner::errorHook()
