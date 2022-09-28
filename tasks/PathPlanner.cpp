@@ -107,6 +107,51 @@ bool PathPlanner::findTrajectoryOutOfObstacle()
         setIfNotSet(RECOVERED);
         return 1;
     }
+    else {
+        std::cout << "FAILED TO FIND A WAY OUT! TRYING SOMETHING" << std::endl;
+        trajectory_follower::SubTrajectory subtraj;
+        subtraj.driveMode = trajectory_follower::DriveMode::ModeTurnOnTheSpot;
+        double actualHeading = start_pose.getYaw();    
+        if (actualHeading < 0)
+            actualHeading = 2*M_PI + actualHeading;
+        double desiredHeading = actualHeading + M_PI;    
+
+        std::vector<base::Angle> angles;
+        angles.emplace_back(base::Angle::fromRad(actualHeading));
+        angles.emplace_back(base::Angle::fromRad(desiredHeading));
+
+        base::Pose2D startPose;
+        startPose.position.x() = start_pose.position.x();
+        startPose.position.y() = start_pose.position.y();
+        startPose.orientation  = actualHeading;
+        
+        base::Pose2D goalPose;
+        goalPose.position.x() = start_pose.position.x();
+        goalPose.position.y() = start_pose.position.y();
+        goalPose.orientation  = desiredHeading;
+
+        subtraj.interpolate(startPose,angles);
+        subtraj.startPose     = startPose;
+        subtraj.goalPose      = goalPose; 
+        _detailedTrajectory2D.write(std::vector<trajectory_follower::SubTrajectory>{subtraj});
+
+        const base::Time current_time = base::Time::now();
+        while (std::abs(base::Time::now().toSeconds() - current_time.toSeconds()) < _recoveryTimeOut.get()){  
+
+            _start_pose_samples.read(start_pose);  
+            trajectory2D = planner->getEnv()->findTrajectoryOutOfObstacle(start_pose.position, 
+                                                                        start_pose.getYaw(), 
+                                                                        ground2Body, 
+                                                                        new_start_position, 
+                                                                        new_start_theta);
+            if (trajectory2D != nullptr){
+                LOG_INFO_S << "FOUND WAY OUT!";
+                _detailedTrajectory2D.write(std::vector<trajectory_follower::SubTrajectory>{*trajectory2D});
+                setIfNotSet(RECOVERED);
+            return 1;
+            }
+        }
+    }
 
     LOG_INFO_S << "NO WAY OUT, ROBOT IS STUCK!";
     setIfNotSet(FAILED_TO_RECOVER);
