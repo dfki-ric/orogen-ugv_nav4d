@@ -79,7 +79,7 @@ int32_t PathPlanner::generateTravMap()
     return 0;
 }
 
-boost::int32_t PathPlanner::findTrajectoryOutOfObstacle()
+bool PathPlanner::findTrajectoryOutOfObstacle()
 {
     setIfNotSet(RECOVERING);
     base::Vector3d new_start_position;

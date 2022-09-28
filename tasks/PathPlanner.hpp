@@ -53,7 +53,7 @@ namespace ugv_nav4d{
 
         /** Triggers generation of a recovery trajectory from an invalid start pose.
          */
-        virtual boost::int32_t findTrajectoryOutOfObstacle();
+        virtual bool findTrajectoryOutOfObstacle();
 
         /** Returns true if the patch is traversable
          */
