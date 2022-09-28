@@ -44,7 +44,8 @@ namespace ugv_nav4d{
          * @param goal Goal position of the robot body in map frame (this should be config.stepHeight above ground)
          *
          */
-        virtual boost::int32_t triggerPathPlanning(::base::samples::RigidBodyState const & start, ::base::samples::RigidBodyState const & goal);
+        virtual boost::int32_t triggerPathPlanning(::base::samples::RigidBodyState const & start, 
+                                                   ::base::samples::RigidBodyState const & goal);
 
         /** Triggers generation of the current traversability map with the current rover position.
          */
@@ -57,6 +58,13 @@ namespace ugv_nav4d{
         /** Returns true if the patch is traversable
          */
         virtual bool isTraversable(::base::Vector3d const & patch_position);
+
+        /** Returns a trajectory based on the specified curvature and motion type
+         */
+        virtual bool getMotion(::base::samples::RigidBodyState const & start,
+                                                                                ::base::samples::RigidBodyState const & end, 
+                                                                                ::ugv_nav4d::Motion::Type const & motion_type, 
+                                                                                double minimum_curvature);
 
 
     public:
