@@ -27,6 +27,7 @@ task_context "PathPlanner" do
     property "mobilityConfig", "ugv_nav4d::Mobility"
     property "plannerConfig", "ugv_nav4d::PlannerConfig"
     property("initialPatchRadius","double", 0.0)
+    property("recoveryTimeOut","double", 10.0)
     property("dumpOnError","int", 0)
     property("dumpOnSuccess","int", 0)
 
@@ -64,6 +65,15 @@ task_context "PathPlanner" do
     operation("generateTravMap").
         returns("int").
         doc("Triggers generation of the traversability map")
+    
+    operation("findTrajectoryOutOfObstacle").
+        returns("bool").
+        doc("Triggers generation of a recovery trajectory from a START_INVALID start pose")
+    
+    operation("isTraversable").
+        arg("patch_position", "base/Vector3d"). 
+        returns("bool").
+        doc("Returns true if the patch at patch_position is traversable")        
 
     runtime_states :NO_MAP,
         :SET_UP_MAP_AND_SPLINES,
@@ -74,8 +84,10 @@ task_context "PathPlanner" do
         :PLANNING,
         :TRAVERSABILITY_MAP_GENERATED,
         :NO_SOLUTION,
-        :FOUND_SOLUTION
-
+        :FOUND_SOLUTION,
+        :RECOVERING,
+        :RECOVERED,
+        :FAILED_TO_RECOVER
 
     periodic 0.1
 end
