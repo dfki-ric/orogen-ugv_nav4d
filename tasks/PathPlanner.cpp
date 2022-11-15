@@ -42,7 +42,7 @@ void PathPlanner::setIfNotSet(const PathPlannerBase::States& newState)
         state(newState);
 }
 
-int32_t PathPlanner::triggerPathPlanning(const base::samples::RigidBodyState& start_position, 
+int32_t PathPlanner::triggerPathPlanning(const base::samples::RigidBodyState& start_position,
                                          const base::samples::RigidBodyState& goal_position)
 {
     if(!gotMap)
@@ -50,22 +50,22 @@ int32_t PathPlanner::triggerPathPlanning(const base::samples::RigidBodyState& st
 
     start_pose = start_position;
     stop_pose = goal_position;
-   
+
     _planning_start.write(start_position);
     _planning_goal.write(goal_position);
-    
+
     executePlanning = true;
-    
+
     return 1;
 }
 
-int32_t PathPlanner::generateTravMap() 
+int32_t PathPlanner::generateTravMap()
 {
     if(!gotMap)
         return 0;
 
     base::samples::RigidBodyState pose;
-    if(_start_pose_samples.readNewest(pose, false) == RTT::NoData) 
+    if(_start_pose_samples.readNewest(pose, false) == RTT::NoData)
     {
         pose = start_pose;
     }
@@ -91,7 +91,7 @@ bool PathPlanner::findTrajectoryOutOfObstacle()
 
     _start_pose_samples.read(start_pose);
 
-    if(!base::samples::RigidBodyState::isValidValue(start_pose.position) || 
+    if(!base::samples::RigidBodyState::isValidValue(start_pose.position) ||
             !base::samples::RigidBodyState::isValidValue(start_pose.orientation)){
 
         LOG_INFO_S << "Invalid start_pose_samples. Recovery behavior is aborted!!";
@@ -99,7 +99,7 @@ bool PathPlanner::findTrajectoryOutOfObstacle()
         return 0;
     }
 
-    //TODO: Use the closest surface patch instead of the hardcoded distToGround param. The param makes sense to be used only for the initial patch generation. 
+    //TODO: Use the closest surface patch instead of the hardcoded distToGround param. The param makes sense to be used only for the initial patch generation.
     ground2Body.translation() = Eigen::Vector3d(0, 0, -_travConfig.get().distToGround);
     trajectory2D = planner->getEnv()->findTrajectoryOutOfObstacle(start_pose.position, start_pose.getYaw(), ground2Body, new_start_position, new_start_theta);
 
@@ -113,10 +113,10 @@ bool PathPlanner::findTrajectoryOutOfObstacle()
         std::cout << "FAILED TO FIND A WAY OUT! TRYING SOMETHING" << std::endl;
         trajectory_follower::SubTrajectory subtraj;
         subtraj.driveMode = trajectory_follower::DriveMode::ModeTurnOnTheSpot;
-        double actualHeading = start_pose.getYaw();    
+        double actualHeading = start_pose.getYaw();
         if (actualHeading < 0)
             actualHeading = 2*M_PI + actualHeading;
-        double desiredHeading = actualHeading + M_PI;    
+        double desiredHeading = actualHeading + M_PI;
 
         std::vector<base::Angle> angles;
         angles.emplace_back(base::Angle::fromRad(actualHeading));
@@ -134,17 +134,17 @@ bool PathPlanner::findTrajectoryOutOfObstacle()
 
         subtraj.interpolate(startPose,angles);
         subtraj.startPose     = startPose;
-        subtraj.goalPose      = goalPose; 
+        subtraj.goalPose      = goalPose;
         _detailedTrajectory2D.write(std::vector<trajectory_follower::SubTrajectory>{subtraj});
 
         const base::Time current_time = base::Time::now();
-        while (std::abs(base::Time::now().toSeconds() - current_time.toSeconds()) < _recoveryTimeOut.get()){  
+        while (std::abs(base::Time::now().toSeconds() - current_time.toSeconds()) < _recoveryTimeOut.get()){
 
-            _start_pose_samples.read(start_pose);  
-            trajectory2D = planner->getEnv()->findTrajectoryOutOfObstacle(start_pose.position, 
-                                                                        start_pose.getYaw(), 
-                                                                        ground2Body, 
-                                                                        new_start_position, 
+            _start_pose_samples.read(start_pose);
+            trajectory2D = planner->getEnv()->findTrajectoryOutOfObstacle(start_pose.position,
+                                                                        start_pose.getYaw(),
+                                                                        ground2Body,
+                                                                        new_start_position,
                                                                         new_start_theta);
             if (trajectory2D != nullptr){
                 LOG_INFO_S << "FOUND WAY OUT!";
@@ -163,9 +163,9 @@ bool PathPlanner::findTrajectoryOutOfObstacle()
 bool PathPlanner::isTraversable(::base::Vector3d const & patch_position){
 
     if(!gotMap){
-        LOG_INFO_S << "PathPlanner::isTraversable: No map is generated !";        
+        LOG_INFO_S << "PathPlanner::isTraversable: No map is generated !";
         return false;
-    }    
+    }
 
     double z{0.0};
     ::base::Vector3d temp = patch_position;
@@ -208,7 +208,7 @@ bool PathPlanner::configureHook()
     }
     V3DD::CONFIGURE_DEBUG_DRAWINGS_USE_PORT(this, channels_filtered);
     V3DD::FLUSH_DRAWINGS();
-#endif    
+#endif
 
     planner.reset(new Planner(_primConfig.get(), _travConfig.get(), _mobilityConfig.get(), _plannerConfig.get()));
     planner->setTravMapCallback([&] ()
@@ -264,7 +264,7 @@ void PathPlanner::updateHook()
     // start planning if there is a new absolute goal in port
     if (_goal_pose_absolute.readNewest(stop_pose, false) == RTT::NewData) {
         _start_pose_samples.read(start_pose);
-       
+
         executePlanning = true;
     }
 
@@ -284,45 +284,6 @@ void PathPlanner::updateHook()
         std::vector<SubTrajectory> trajectory2D, trajectory3D;
 
         Planner::PLANNING_RESULT res = planner->plan(_maxTime.value(), start_pose, stop_pose, trajectory2D, trajectory3D, _dumpOnError.get(), _dumpOnSuccess.get());
-
-        //HACK: The planner fails to find a pure pointturn but we can still create a subtrajectory of a pure pointturn
-        if ((start_pose.position - stop_pose.position).norm() < 0.05 && res == Planner::PLANNING_RESULT::NO_SOLUTION){
-            trajectory_follower::SubTrajectory subtraj;
-            subtraj.driveMode = trajectory_follower::DriveMode::ModeTurnOnTheSpot;
-            double actualHeading  = start_pose.getYaw();    
-            double desiredHeading = stop_pose.getYaw();
-
-            if (actualHeading < 0)
-                actualHeading = 2*M_PI + actualHeading;
-
-            if (desiredHeading < 0)
-                desiredHeading = 2*M_PI + desiredHeading; 
-
-            std::vector<base::Angle> angles;
-            angles.emplace_back(base::Angle::fromRad(actualHeading));
-            angles.emplace_back(base::Angle::fromRad(desiredHeading));
-
-            base::Pose2D startPose;
-            startPose.position.x() = start_pose.position.x();
-            startPose.position.y() = start_pose.position.y();
-            startPose.orientation  = actualHeading;
-
-            base::Pose2D goalPose;
-            goalPose.position.x() = start_pose.position.x();
-            goalPose.position.y() = start_pose.position.y();
-            goalPose.orientation  = desiredHeading;
-
-            subtraj.interpolate(startPose,angles);
-            subtraj.startPose     = startPose;
-            subtraj.goalPose      = goalPose; 
-
-            //Only do a pointturn if heading diff is more than 1 degrees
-            if (std::abs(actualHeading-desiredHeading) > 0.02){
-                //HACK because the planner fails to plan a pure pointturn
-                res = Planner::PLANNING_RESULT::FOUND_SOLUTION;
-                _detailedTrajectory2D.write(std::vector<trajectory_follower::SubTrajectory>{subtraj});                
-            }    
-        }
 
         // Create vectors of base trajectories for obtained trajectories which can be written
         // to the original output ports.
@@ -364,7 +325,7 @@ void PathPlanner::updateHook()
     }
 #ifdef ENABLE_V3DD_DRAWINGS
     V3DD::FLUSH_DRAWINGS();
-#endif    
+#endif
     PathPlannerBase::updateHook();
 }
 void PathPlanner::errorHook()
