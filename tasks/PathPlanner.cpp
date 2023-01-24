@@ -101,8 +101,11 @@ bool PathPlanner::findTrajectoryOutOfObstacle()
 
     //TODO: Use the closest surface patch instead of the hardcoded distToGround param. The param makes sense to be used only for the initial patch generation.
     ground2Body.translation() = Eigen::Vector3d(0, 0, -_travConfig.get().distToGround);
-    trajectory2D = planner->getEnv()->findTrajectoryOutOfObstacle(start_pose.position, start_pose.getYaw(), ground2Body, new_start_position, new_start_theta);
 
+    const Eigen::Affine3d startGround2Mls(start_pose.getTransform() * ground2Body);
+    LOG_DEBUG_S << "PathPlanner::findTrajectoryOutOfObstacle(): startGround2Mls " << startGround2Mls.translation();
+
+    trajectory2D = planner->getEnv()->findTrajectoryOutOfObstacle(startGround2Mls.translation(), start_pose.getYaw(), ground2Body, new_start_position, new_start_theta);
     if (trajectory2D != nullptr){
         LOG_INFO_S << "FOUND WAY OUT!";
         _detailedTrajectory2D.write(std::vector<trajectory_follower::SubTrajectory>{*trajectory2D});
@@ -110,7 +113,7 @@ bool PathPlanner::findTrajectoryOutOfObstacle()
         return 1;
     }
     else {
-        std::cout << "FAILED TO FIND A WAY OUT! TRYING SOMETHING" << std::endl;
+        LOG_INFO_S <<  "FAILED TO FIND A WAY OUT! TRYING SOMETHING";
         trajectory_follower::SubTrajectory subtraj;
         subtraj.driveMode = trajectory_follower::DriveMode::ModeTurnOnTheSpot;
         double actualHeading = start_pose.getYaw();
