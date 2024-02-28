@@ -150,7 +150,7 @@ void PathPlanner::updateHook()
     } else if(map_status == RTT::NewData)
     {
         gotMap = true;
-        setIfNotSet(SET_UP_MAP_AND_SPLINES);
+        setIfNotSet(UPDATE_MAP);
         planner->updateMap(map);
         setIfNotSet(GOT_MAP);
     }

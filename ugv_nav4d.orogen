@@ -66,7 +66,7 @@ task_context "PathPlanner" do
         doc("Triggers generation of a recovery trajectory from a START_INVALID start pose")
 
     runtime_states :NO_MAP,
-        :SET_UP_MAP_AND_SPLINES,
+        :UPDATE_MAP,
         :GOT_MAP,
         :GOAL_INVALID,
         :START_INVALID,
