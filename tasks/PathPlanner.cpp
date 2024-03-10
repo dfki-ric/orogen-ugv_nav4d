@@ -61,6 +61,9 @@ int32_t PathPlanner::triggerPathPlanning(const base::samples::RigidBodyState& st
 
 bool PathPlanner::findTrajectoryOutOfObstacle()
 {
+    if (!gotMap){
+        return false;
+    }
     setIfNotSet(RECOVERING);
     std::shared_ptr<trajectory_follower::SubTrajectory> trajectory2D;
     Eigen::Affine3d ground2Body(Eigen::Affine3d::Identity());
@@ -73,7 +76,7 @@ bool PathPlanner::findTrajectoryOutOfObstacle()
 
         LOG_INFO_S << "Invalid start_pose_samples. Recovery behavior is aborted!!";
         setIfNotSet(FAILED_TO_RECOVER);
-        return 0;
+        return false;
     }
 
     //TODO: Use the closest surface patch instead of the hardcoded distToGround param. The param makes sense to be used only for the initial patch generation.
@@ -86,12 +89,12 @@ bool PathPlanner::findTrajectoryOutOfObstacle()
         LOG_INFO_S << "FOUND WAY OUT!";
         _detailedTrajectory2D.write(std::vector<trajectory_follower::SubTrajectory>{*trajectory2D});
         setIfNotSet(RECOVERED);
-        return 1;
+        return true;
     }
     else {
         LOG_INFO_S << "NO WAY OUT, ROBOT IS STUCK!";
         setIfNotSet(FAILED_TO_RECOVER);
-        return 0;
+        return false;
     }
 }
 
