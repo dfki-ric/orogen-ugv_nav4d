@@ -47,17 +47,9 @@ namespace ugv_nav4d{
         virtual boost::int32_t triggerPathPlanning(::base::samples::RigidBodyState const & start, 
                                                    ::base::samples::RigidBodyState const & goal);
 
-        /** Triggers generation of the current traversability map with the current rover position.
-         */
-        virtual boost::int32_t generateTravMap();
-
         /** Triggers generation of a recovery trajectory from an invalid start pose.
          */
         virtual bool findTrajectoryOutOfObstacle();
-
-        /** Returns true if the patch is traversable
-         */
-        virtual bool isTraversable(::base::Vector3d const & patch_position);
 
     public:
         /** TaskContext constructor for PathPlanner

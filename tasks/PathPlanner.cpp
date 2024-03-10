@@ -59,35 +59,15 @@ int32_t PathPlanner::triggerPathPlanning(const base::samples::RigidBodyState& st
     return 1;
 }
 
-int32_t PathPlanner::generateTravMap()
-{
-    if(!gotMap)
-        return 0;
-
-    base::samples::RigidBodyState pose;
-    if(_start_pose_samples.readNewest(pose, false) == RTT::NoData)
-    {
-        pose = start_pose;
-    }
-
-    if(!initalPatchAdded)
-    {
-        planner->setInitialPatch(pose.getTransform(), _initialPatchRadius.get());
-        initalPatchAdded = true;
-    }
-
-    LOG_INFO_S << "PathPlanner: Manually generating travMap...";
-    planner->genTravMap(pose);
-    return 0;
-}
-
 bool PathPlanner::findTrajectoryOutOfObstacle()
 {
+    if (!gotMap){
+        return false;
+    }
     setIfNotSet(RECOVERING);
-    base::Vector3d new_start_position;
-    double new_start_theta;
     std::shared_ptr<trajectory_follower::SubTrajectory> trajectory2D;
     Eigen::Affine3d ground2Body(Eigen::Affine3d::Identity());
+    ground2Body.translation() = Eigen::Vector3d(0, 0, -_travConfig.get().distToGround);
 
     _start_pose_samples.read(start_pose);
 
@@ -96,103 +76,26 @@ bool PathPlanner::findTrajectoryOutOfObstacle()
 
         LOG_INFO_S << "Invalid start_pose_samples. Recovery behavior is aborted!!";
         setIfNotSet(FAILED_TO_RECOVER);
-        return 0;
+        return false;
     }
 
     //TODO: Use the closest surface patch instead of the hardcoded distToGround param. The param makes sense to be used only for the initial patch generation.
-    ground2Body.translation() = Eigen::Vector3d(0, 0, -_travConfig.get().distToGround);
 
     const Eigen::Affine3d startGround2Mls(start_pose.getTransform() * ground2Body);
     LOG_DEBUG_S << "PathPlanner::findTrajectoryOutOfObstacle(): startGround2Mls " << startGround2Mls.translation();
 
-    trajectory2D = planner->getEnv()->findTrajectoryOutOfObstacle(startGround2Mls.translation(), start_pose.getYaw(), ground2Body, new_start_position, new_start_theta);
+    trajectory2D = planner->findTrajectoryOutOfObstacle(startGround2Mls.translation(), start_pose.getYaw(), ground2Body);
     if (trajectory2D != nullptr){
         LOG_INFO_S << "FOUND WAY OUT!";
         _detailedTrajectory2D.write(std::vector<trajectory_follower::SubTrajectory>{*trajectory2D});
         setIfNotSet(RECOVERED);
-        return 1;
+        return true;
     }
     else {
-        LOG_INFO_S <<  "FAILED TO FIND A WAY OUT! TRYING SOMETHING";
-        trajectory_follower::SubTrajectory subtraj;
-        subtraj.driveMode = trajectory_follower::DriveMode::ModeTurnOnTheSpot;
-        double actualHeading = start_pose.getYaw();
-        if (actualHeading < 0)
-            actualHeading = 2*M_PI + actualHeading;
-        double desiredHeading = actualHeading + M_PI;
-
-        std::vector<base::Angle> angles;
-        angles.emplace_back(base::Angle::fromRad(actualHeading));
-        angles.emplace_back(base::Angle::fromRad(desiredHeading));
-
-        base::Pose2D startPose;
-        startPose.position.x() = start_pose.position.x();
-        startPose.position.y() = start_pose.position.y();
-        startPose.orientation  = actualHeading;
-
-        base::Pose2D goalPose;
-        goalPose.position.x() = start_pose.position.x();
-        goalPose.position.y() = start_pose.position.y();
-        goalPose.orientation  = desiredHeading;
-
-        subtraj.interpolate(startPose,angles);
-        subtraj.startPose     = startPose;
-        subtraj.goalPose      = goalPose;
-        _detailedTrajectory2D.write(std::vector<trajectory_follower::SubTrajectory>{subtraj});
-
-        const base::Time current_time = base::Time::now();
-        while (std::abs(base::Time::now().toSeconds() - current_time.toSeconds()) < _recoveryTimeOut.get()){
-
-            _start_pose_samples.read(start_pose);
-            trajectory2D = planner->getEnv()->findTrajectoryOutOfObstacle(start_pose.position,
-                                                                        start_pose.getYaw(),
-                                                                        ground2Body,
-                                                                        new_start_position,
-                                                                        new_start_theta);
-            if (trajectory2D != nullptr){
-                LOG_INFO_S << "FOUND WAY OUT!";
-                _detailedTrajectory2D.write(std::vector<trajectory_follower::SubTrajectory>{*trajectory2D});
-                setIfNotSet(RECOVERED);
-            return 1;
-            }
-        }
-    }
-
-    LOG_INFO_S << "NO WAY OUT, ROBOT IS STUCK!";
-    setIfNotSet(FAILED_TO_RECOVER);
-    return 0;
-}
-
-bool PathPlanner::isTraversable(::base::Vector3d const & patch_position){
-
-    if(!gotMap){
-        LOG_INFO_S << "PathPlanner::isTraversable: No map is generated !";
+        LOG_INFO_S << "NO WAY OUT, ROBOT IS STUCK!";
+        setIfNotSet(FAILED_TO_RECOVER);
         return false;
     }
-
-    double z{0.0};
-    ::base::Vector3d temp = patch_position;
-    if (planner->getEnv()->getMlsMap().getClosestSurfacePos(patch_position, z)){
-        temp.z() = z;
-    }
-
-    ::maps::grid::Index idx;
-    if(!planner->getTraversabilityMap().toGrid(temp, idx))
-    {
-        LOG_INFO_S << "PathPlanner::isTraversable: position outside of map !";
-        return false;
-    }
-
-    auto &trList(planner->getTraversabilityMap().at(idx));
-
-    //check if we got an existing node
-    for(traversability_generator3d::TravGenNode *snode : trList)
-    {
-        if (snode->getType() == TraversabilityNodeBase::TRAVERSABLE){
-            return true;
-        }
-    }
-    return false;
 }
 
 bool PathPlanner::configureHook()
@@ -250,7 +153,7 @@ void PathPlanner::updateHook()
     } else if(map_status == RTT::NewData)
     {
         gotMap = true;
-        setIfNotSet(SET_UP_MAP_AND_SPLINES);
+        setIfNotSet(UPDATE_MAP);
         planner->updateMap(map);
         setIfNotSet(GOT_MAP);
     }
@@ -282,6 +185,8 @@ void PathPlanner::updateHook()
             planner->setInitialPatch(start_pose.getTransform(), _initialPatchRadius.get());
             initalPatchAdded = true;
         }
+
+        planner->enablePathStatistics(_plannerConfig.get().usePathStatistics);
 
         setIfNotSet(PLANNING);
         std::vector<SubTrajectory> trajectory2D, trajectory3D;
