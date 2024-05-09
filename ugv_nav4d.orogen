@@ -30,6 +30,8 @@ task_context "PathPlanner" do
     property("recoveryTimeOut","double", 10.0)
     property("dumpOnError","int", 0)
     property("dumpOnSuccess","int", 0)
+    property("soilType","int",0)
+    property("soilRadius","double",2)
 
     # --- Input ports ---
 
@@ -47,6 +49,7 @@ task_context "PathPlanner" do
     output_port "detailedTrajectory3D", "std::vector<trajectory_follower/SubTrajectory>"
 
     output_port "tr_map", '/maps/grid/TraversabilityBaseMap3d'
+    output_port "soil_map", '/maps/grid/TraversabilityBaseMap3d'
     output_port "ob_map", '/maps/grid/TraversabilityBaseMap3d'
 
     output_port "planning_start", "base/samples/RigidBodyState"

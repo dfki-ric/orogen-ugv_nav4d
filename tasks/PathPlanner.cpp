@@ -218,6 +218,7 @@ bool PathPlanner::configureHook()
     {
         //this callback will be called whenever the planner has generated a new travmap.
         _tr_map.write(planner->getTraversabilityMap().copyCast<maps::grid::TraversabilityNodeBase*>());
+        _soil_map.write(planner->getSoilMap().copyCast<maps::grid::TraversabilityNodeBase*>());
         _ob_map.write(planner->getObstacleMap().copyCast<maps::grid::TraversabilityNodeBase*>());
     });
 
@@ -239,7 +240,6 @@ bool PathPlanner::startHook()
 
 void PathPlanner::updateHook()
 {
-
     maps::grid::MLSMapSloped map;
     auto map_status = _map.readNewest(map, false);
 
@@ -273,6 +273,10 @@ void PathPlanner::updateHook()
 
     if(executePlanning)
     {
+
+
+        planner->getEnv()->getTravGen().setSoilType(start_pose.position, _soilRadius.get(), _soilType.get());
+
         LOG_INFO_S << "PathPlanner: Executing planning...";
         _planning_start.write(start_pose);
         _planning_goal.write(stop_pose);

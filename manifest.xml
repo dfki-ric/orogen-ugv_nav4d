@@ -16,7 +16,6 @@
   </keywords>
   <depend package="tools/orocos_cpp" />
   <depend package="planning/ugv_nav4d" />
-  <depend package="planning/traversability_generator3d" /> 
   <depend package="slam/orogen/maps" />
   <depend package="gui/orogen/vizkit3d_debug_drawings" />
  <depend package="control/trajectory_follower" />
