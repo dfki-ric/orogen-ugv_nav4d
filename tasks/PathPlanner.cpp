@@ -176,9 +176,7 @@ void PathPlanner::updateHook()
 
     if(executePlanning)
     {
-
-
-        planner->getEnv()->getTravGen().setSoilType(start_pose.position, _soilRadius.get(), _soilType.get());
+        planner->getEnv()->getTravGen().addSoilNode(start_pose.position, _soilRadius.get(), _soilType.get());
 
         LOG_INFO_S << "PathPlanner: Executing planning...";
         _planning_start.write(start_pose);
