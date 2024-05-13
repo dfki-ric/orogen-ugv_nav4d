@@ -98,6 +98,15 @@ bool PathPlanner::findTrajectoryOutOfObstacle()
     }
 }
 
+bool PathPlanner::clearSoilMap(){
+    if (!gotMap){
+        return false;
+    }   
+    planner->getEnv()->getTravGen().clearSoilMap();
+    _soil_map.write(planner->getSoilMap().copyCast<maps::grid::TraversabilityNodeBase*>());
+    return true;
+}
+
 bool PathPlanner::configureHook()
 {
 
@@ -121,7 +130,6 @@ bool PathPlanner::configureHook()
     {
         //this callback will be called whenever the planner has generated a new travmap.
         _tr_map.write(planner->getTraversabilityMap().copyCast<maps::grid::TraversabilityNodeBase*>());
-        _soil_map.write(planner->getSoilMap().copyCast<maps::grid::TraversabilityNodeBase*>());
         _ob_map.write(planner->getObstacleMap().copyCast<maps::grid::TraversabilityNodeBase*>());
     });
 
@@ -143,6 +151,7 @@ bool PathPlanner::startHook()
 
 void PathPlanner::updateHook()
 {
+
     maps::grid::MLSMapSloped map;
     auto map_status = _map.readNewest(map, false);
 
@@ -156,6 +165,31 @@ void PathPlanner::updateHook()
         setIfNotSet(UPDATE_MAP);
         planner->updateMap(map);
         setIfNotSet(GOT_MAP);
+    }
+
+    if (_soil_sample.readNewest(soil_samples, false) == RTT::NewData){
+        _start_pose_samples.read(start_pose);
+        for (auto sample : soil_samples){
+            switch(sample.type)
+            {
+                case traversability_generator3d::POINT:
+                    planner->getEnv()->getTravGen().addSoilNode(start_pose.position, 
+                                                                sample.soilType);
+                    break;
+                case traversability_generator3d::CIRCLE:
+                    planner->getEnv()->getTravGen().addSoilNode(start_pose.position, 
+                                                                sample.radius,
+                                                                sample.soilType);
+                    break;
+                case traversability_generator3d::BOX:
+                    planner->getEnv()->getTravGen().addSoilNode(start_pose.position, 
+                                                                sample.min,
+                                                                sample.max,
+                                                                sample.soilType);
+                    break;
+            }
+        }
+        _soil_map.write(planner->getSoilMap().copyCast<maps::grid::TraversabilityNodeBase*>());
     }
 
     // start planning if there is a new relative goal in port
@@ -176,8 +210,6 @@ void PathPlanner::updateHook()
 
     if(executePlanning)
     {
-        planner->getEnv()->getTravGen().addSoilNode(start_pose.position, _soilRadius.get(), _soilType.get());
-
         LOG_INFO_S << "PathPlanner: Executing planning...";
         _planning_start.write(start_pose);
         _planning_goal.write(stop_pose);

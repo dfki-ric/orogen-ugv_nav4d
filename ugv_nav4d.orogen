@@ -9,6 +9,7 @@ using_library "vizkit3d_debug_drawings"
 import_types_from "base"
 import_types_from "maps"
 import_types_from "traversability_generator3d/TraversabilityConfig.hpp"
+import_types_from "traversability_generator3d/SoilSample.hpp"
 import_types_from "ugv_nav4d/PlannerConfig.hpp"
 import_types_from "ugv_nav4d/Mobility.hpp"
 import_types_from "ugv_nav4d/PreComputedMotions.hpp"
@@ -29,11 +30,10 @@ task_context "PathPlanner" do
     property("initialPatchRadius","double", 0.0)
     property("dumpOnError","int", 0)
     property("dumpOnSuccess","int", 0)
-    property("soilType","int",0)
-    property("soilRadius","double",2)
 
     # --- Input ports ---
 
+    input_port "soil_sample", "std::vector<traversability_generator3d/SoilSample>"
     input_port "map", '/maps/grid/MLSMapSloped'
     input_port "start_pose_samples", "base/samples/RigidBodyState"  # should be travConfig.distToGround above the floor
     # Writing one of those ports triggers the path planning, if map and start_pose_samples are given.
@@ -67,6 +67,10 @@ task_context "PathPlanner" do
     operation("findTrajectoryOutOfObstacle").
         returns("bool").
         doc("Triggers generation of a recovery trajectory from a START_INVALID start pose")
+
+    operation("clearSoilMap").
+        returns("bool").
+        doc("Clears the soil map of all soil information")
 
     runtime_states :NO_MAP,
         :UPDATE_MAP,
