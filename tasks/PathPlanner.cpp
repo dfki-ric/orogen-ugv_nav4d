@@ -165,12 +165,13 @@ void PathPlanner::updateHook()
         setIfNotSet(UPDATE_MAP);
         planner->updateMap(map);
         setIfNotSet(GOT_MAP);
+        _soil_map.write(planner->getSoilMap().copyCast<maps::grid::TraversabilityNodeBase*>());
     }
 
     if (_soil_sample.readNewest(soil_samples, false) == RTT::NewData){
         _start_pose_samples.read(start_pose);
-        for (auto sample : soil_samples){
-            switch(sample.type)
+        for (const auto & sample : soil_samples){
+            switch(sample.sampleType)
             {
                 case traversability_generator3d::POINT:
                     planner->getEnv()->getTravGen().addSoilNode(start_pose.position, 
