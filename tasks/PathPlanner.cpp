@@ -13,8 +13,6 @@
 
 using namespace ugv_nav4d;
 
-//#define ENABLE_V3DD_DRAWINGS
-
 using Eigen::Vector3d;
 using Eigen::Affine3d;
 using Eigen::Translation3d;
@@ -101,7 +99,7 @@ bool PathPlanner::findTrajectoryOutOfObstacle()
 bool PathPlanner::configureHook()
 {
 
-#ifdef ENABLE_V3DD_DRAWINGS
+#ifdef ENABLE_DEBUG_DRAWINGS
     std::vector<std::string> channels = V3DD::GET_DECLARED_CHANNELS();
     std::vector<std::string> channels_filtered;
     for(const std::string& channel : channels)
@@ -231,7 +229,7 @@ void PathPlanner::updateHook()
 
         executePlanning = false;
     }
-#ifdef ENABLE_V3DD_DRAWINGS
+#ifdef ENABLE_DEBUG_DRAWINGS
     V3DD::FLUSH_DRAWINGS();
 #endif
     PathPlannerBase::updateHook();
