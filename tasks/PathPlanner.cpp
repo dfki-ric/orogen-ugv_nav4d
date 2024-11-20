@@ -144,7 +144,9 @@ void PathPlanner::updateHook()
     maps::grid::MLSMapSloped map;
     auto map_status = _map.readNewest(map, false);
 
-    if(map_status == RTT::NoData)
+    // The NO_MAP state should only be accessible if no map has ever been received.
+    // The planner should still be able to plan on 'old' maps (or least recently received map)
+    if((map_status == RTT::NoData) && !gotMap)
     {
         setIfNotSet(NO_MAP);
         return;
