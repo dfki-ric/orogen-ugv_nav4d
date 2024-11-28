@@ -13,8 +13,6 @@
 
 using namespace ugv_nav4d;
 
-//#define ENABLE_V3DD_DRAWINGS
-
 using Eigen::Vector3d;
 using Eigen::Affine3d;
 using Eigen::Translation3d;
@@ -110,7 +108,7 @@ bool PathPlanner::clearSoilMap(){
 bool PathPlanner::configureHook()
 {
 
-#ifdef ENABLE_V3DD_DRAWINGS
+#ifdef ENABLE_DEBUG_DRAWINGS
     std::vector<std::string> channels = V3DD::GET_DECLARED_CHANNELS();
     std::vector<std::string> channels_filtered;
     for(const std::string& channel : channels)
@@ -155,7 +153,9 @@ void PathPlanner::updateHook()
     maps::grid::MLSMapSloped map;
     auto map_status = _map.readNewest(map, false);
 
-    if(map_status == RTT::NoData)
+    // The NO_MAP state should only be accessible if no map has ever been received.
+    // The planner should still be able to plan on 'old' maps (or least recently received map)
+    if((map_status == RTT::NoData) && !gotMap)
     {
         setIfNotSet(NO_MAP);
         return;
@@ -266,7 +266,7 @@ void PathPlanner::updateHook()
 
         executePlanning = false;
     }
-#ifdef ENABLE_V3DD_DRAWINGS
+#ifdef ENABLE_DEBUG_DRAWINGS
     V3DD::FLUSH_DRAWINGS();
 #endif
     PathPlannerBase::updateHook();

@@ -3,7 +3,12 @@ cmake_minimum_required(VERSION 2.6)
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-add_definitions(-DENABLE_DEBUG_DRAWINGS)
+if(ENABLE_DEBUG_DRAWINGS)
+    message(STATUS "ENABLE_DEBUG_DRAWINGS is defined with value: ${ENABLE_DEBUG_DRAWINGS}")
+    add_definitions(-DENABLE_DEBUG_DRAWINGS)
+else()
+    message(STATUS "ENABLE_DEBUG_DRAWINGS is set to OFF. Skipped!")
+endif()
 
 SET (CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/.orogen/config")
 INCLUDE(ugv_nav4dBase)
