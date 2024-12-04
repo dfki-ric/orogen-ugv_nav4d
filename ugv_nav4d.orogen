@@ -10,6 +10,7 @@ import_types_from "base"
 import_types_from "maps"
 import_types_from "traversability_generator3d/TraversabilityConfig.hpp"
 import_types_from "traversability_generator3d/SoilSample.hpp"
+import_types_from "traversability_generator3d/SoilNode.hpp"
 import_types_from "ugv_nav4d/PlannerConfig.hpp"
 import_types_from "ugv_nav4d/Mobility.hpp"
 import_types_from "ugv_nav4d/PreComputedMotions.hpp"
@@ -48,7 +49,7 @@ task_context "PathPlanner" do
     output_port "detailedTrajectory3D", "std::vector<trajectory_follower/SubTrajectory>"
 
     output_port "tr_map", '/maps/grid/TraversabilityBaseMap3d'
-    output_port "soil_map", '/maps/grid/TraversabilityBaseMap3d'
+    output_port "soil_map", '/traversability_generator3d/SoilMap3d'
     output_port "ob_map", '/maps/grid/TraversabilityBaseMap3d'
 
     output_port "planning_start", "base/samples/RigidBodyState"

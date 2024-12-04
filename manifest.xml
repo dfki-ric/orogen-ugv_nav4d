@@ -18,6 +18,6 @@
   <depend package="planning/ugv_nav4d" />
   <depend package="slam/orogen/maps" />
   <depend package="gui/orogen/vizkit3d_debug_drawings" />
- <depend package="control/trajectory_follower" />
+  <depend package="control/trajectory_follower" />
   <depend package="drivers/orogen/transformer" />
 </package>

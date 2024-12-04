@@ -100,8 +100,8 @@ bool PathPlanner::clearSoilMap(){
     if (!gotMap){
         return false;
     }   
-    planner->getEnv()->getTravGen().clearSoilMap();
-    _soil_map.write(planner->getSoilMap().copyCast<maps::grid::TraversabilityNodeBase*>());
+    planner->clearSoilMap();
+    _soil_map.write(planner->getSoilMap());
     return true;
 }
 
@@ -165,32 +165,15 @@ void PathPlanner::updateHook()
         setIfNotSet(UPDATE_MAP);
         planner->updateMap(map);
         setIfNotSet(GOT_MAP);
-        _soil_map.write(planner->getSoilMap().copyCast<maps::grid::TraversabilityNodeBase*>());
+        _soil_map.write(planner->getSoilMap());
     }
 
     if (_soil_sample.readNewest(soil_samples, false) == RTT::NewData){
         _start_pose_samples.read(start_pose);
         for (const auto & sample : soil_samples){
-            switch(sample.sampleType)
-            {
-                case traversability_generator3d::POINT:
-                    planner->getEnv()->getTravGen().addSoilNode(start_pose.position, 
-                                                                sample.soilType);
-                    break;
-                case traversability_generator3d::CIRCLE:
-                    planner->getEnv()->getTravGen().addSoilNode(start_pose.position, 
-                                                                sample.radius,
-                                                                sample.soilType);
-                    break;
-                case traversability_generator3d::BOX:
-                    planner->getEnv()->getTravGen().addSoilNode(start_pose.position, 
-                                                                sample.min,
-                                                                sample.max,
-                                                                sample.soilType);
-                    break;
-            }
+            planner->addSoilNode(sample);  
         }
-        _soil_map.write(planner->getSoilMap().copyCast<maps::grid::TraversabilityNodeBase*>());
+        _soil_map.write(planner->getSoilMap());
     }
 
     // start planning if there is a new relative goal in port
