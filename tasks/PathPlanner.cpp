@@ -237,103 +237,109 @@ bool PathPlanner::startHook()
 
 void PathPlanner::updateHook()
 {
+    try{
 
-    maps::grid::MLSMapSloped map;
-    auto map_status = _map.readNewest(map, false);
+        maps::grid::MLSMapSloped map;
+        auto map_status = _map.readNewest(map, false);
 
-    // The NO_MAP state should only be accessible if no map has ever been received.
-    // The planner should still be able to plan on 'old' maps (or least recently received map)
-    if((map_status == RTT::NoData) && !gotMap)
-    {
-        setIfNotSet(NO_MAP);
-        return;
-    } else if(map_status == RTT::NewData)
-    {
-        gotMap = true;
-        setIfNotSet(UPDATE_MAP);
-        if (_write_mls_to_port.get() == true){
-            _mls_map.write(map);
-        }
-        planner->updateMap(map);
-        setIfNotSet(GOT_MAP);
-    }
-
-    // start planning if there is a new relative goal in port
-    if (_goal_pose_relative.readNewest(stop_pose, false) == RTT::NewData) {
-        _start_pose_samples.read(start_pose);
-        // transform stop pose to slam frame
-        stop_pose.setTransform(start_pose.getTransform() * stop_pose.getTransform());
-
-        executePlanning = true;
-    }
-
-    // start planning if there is a new absolute goal in port
-    if (_goal_pose_absolute.readNewest(stop_pose, false) == RTT::NewData) {
-        _start_pose_samples.read(start_pose);
-
-        executePlanning = true;
-    }
-
-    if(executePlanning)
-    {
-        LOG_INFO_S << "PathPlanner: Executing planning...";
-        _planning_start.write(start_pose);
-        _planning_goal.write(stop_pose);
-
-        if(!initalPatchAdded)
+        // The NO_MAP state should only be accessible if no map has ever been received.
+        // The planner should still be able to plan on 'old' maps (or least recently received map)
+        if((map_status == RTT::NoData) && !gotMap)
         {
-            planner->setInitialPatch(start_pose.getTransform(), _initialPatchRadius.get());
-            initalPatchAdded = true;
-        }
-
-        planner->enablePathStatistics(_plannerConfig.get().usePathStatistics);
-
-        setIfNotSet(PLANNING);
-        std::vector<SubTrajectory> trajectory2D, trajectory3D;
-
-        Planner::PLANNING_RESULT res = planner->plan(_maxTime.value(), start_pose, stop_pose, trajectory2D, trajectory3D, _dumpOnError.get(), _dumpOnSuccess.get());
-
-        // Create vectors of base trajectories for obtained trajectories which can be written
-        // to the original output ports.
-        std::vector<base::Trajectory>
-            trajectory2DBase(trajectory2D.size()),
-            trajectory3DBase(trajectory3D.size());
-        std::transform(trajectory2D.cbegin(), trajectory2D.cend(), trajectory2DBase.begin(),
-                [](const SubTrajectory& t) { return t.toBaseTrajectory(); });
-        std::transform(trajectory3D.cbegin(), trajectory3D.cend(), trajectory3DBase.begin(),
-                [](const SubTrajectory& t) { return t.toBaseTrajectory(); });
-
-        switch(res)
+            setIfNotSet(NO_MAP);
+            return;
+        } else if(map_status == RTT::NewData)
         {
-            case Planner::FOUND_SOLUTION:
-                _trajectory2D.write(trajectory2DBase);
-                _trajectory3D.write(trajectory3DBase);
-                _detailedTrajectory2D.write(trajectory2D);
-                _detailedTrajectory3D.write(trajectory3D);
-                setIfNotSet(FOUND_SOLUTION);
-                break;
-            case Planner::GOAL_INVALID:
-                setIfNotSet(ugv_nav4d::PathPlannerBase::GOAL_INVALID);
-                break;
-            case Planner::START_INVALID:
-                setIfNotSet(ugv_nav4d::PathPlannerBase::START_INVALID);
-                break;
-            case Planner::INTERNAL_ERROR:
-                setIfNotSet(ugv_nav4d::PathPlannerBase::INTERNAL_ERROR);
-                break;
-            case Planner::NO_SOLUTION:
-                setIfNotSet(ugv_nav4d::PathPlannerBase::NO_SOLUTION);
-                break;
-            case Planner::NO_MAP:
-                setIfNotSet(ugv_nav4d::PathPlannerBase::NO_MAP);
-                break;
+            gotMap = true;
+            setIfNotSet(UPDATE_MAP);
+            if (_write_mls_to_port.get() == true){
+                _mls_map.write(map);
+            }
+            planner->updateMap(map);
+            setIfNotSet(GOT_MAP);
         }
 
-        executePlanning = false;
-    }
+        // start planning if there is a new relative goal in port
+        if (_goal_pose_relative.readNewest(stop_pose, false) == RTT::NewData) {
+            _start_pose_samples.read(start_pose);
+            // transform stop pose to slam frame
+            stop_pose.setTransform(start_pose.getTransform() * stop_pose.getTransform());
+
+            executePlanning = true;
+        }
+
+        // start planning if there is a new absolute goal in port
+        if (_goal_pose_absolute.readNewest(stop_pose, false) == RTT::NewData) {
+            _start_pose_samples.read(start_pose);
+
+            executePlanning = true;
+        }
+
+        if(executePlanning)
+        {
+            LOG_INFO_S << "PathPlanner: Executing planning...";
+            _planning_start.write(start_pose);
+            _planning_goal.write(stop_pose);
+
+            if(!initalPatchAdded)
+            {
+                planner->setInitialPatch(start_pose.getTransform(), _initialPatchRadius.get());
+                initalPatchAdded = true;
+            }
+
+            planner->enablePathStatistics(_plannerConfig.get().usePathStatistics);
+
+            setIfNotSet(PLANNING);
+            std::vector<SubTrajectory> trajectory2D, trajectory3D;
+
+            Planner::PLANNING_RESULT res = planner->plan(_maxTime.value(), start_pose, stop_pose, trajectory2D, trajectory3D, _dumpOnError.get(), _dumpOnSuccess.get());
+
+            // Create vectors of base trajectories for obtained trajectories which can be written
+            // to the original output ports.
+            std::vector<base::Trajectory>
+                trajectory2DBase(trajectory2D.size()),
+                trajectory3DBase(trajectory3D.size());
+            std::transform(trajectory2D.cbegin(), trajectory2D.cend(), trajectory2DBase.begin(),
+                    [](const SubTrajectory& t) { return t.toBaseTrajectory(); });
+            std::transform(trajectory3D.cbegin(), trajectory3D.cend(), trajectory3DBase.begin(),
+                    [](const SubTrajectory& t) { return t.toBaseTrajectory(); });
+
+            switch(res)
+            {
+                case Planner::FOUND_SOLUTION:
+                    _trajectory2D.write(trajectory2DBase);
+                    _trajectory3D.write(trajectory3DBase);
+                    _detailedTrajectory2D.write(trajectory2D);
+                    _detailedTrajectory3D.write(trajectory3D);
+                    setIfNotSet(FOUND_SOLUTION);
+                    break;
+                case Planner::GOAL_INVALID:
+                    setIfNotSet(ugv_nav4d::PathPlannerBase::GOAL_INVALID);
+                    break;
+                case Planner::START_INVALID:
+                    setIfNotSet(ugv_nav4d::PathPlannerBase::START_INVALID);
+                    break;
+                case Planner::INTERNAL_ERROR:
+                    setIfNotSet(ugv_nav4d::PathPlannerBase::INTERNAL_ERROR);
+                    break;
+                case Planner::NO_SOLUTION:
+                    setIfNotSet(ugv_nav4d::PathPlannerBase::NO_SOLUTION);
+                    break;
+                case Planner::NO_MAP:
+                    setIfNotSet(ugv_nav4d::PathPlannerBase::NO_MAP);
+                    break;
+            }
+            executePlanning = false;
 #ifdef ENABLE_DEBUG_DRAWINGS
-    V3DD::FLUSH_DRAWINGS();
+            V3DD::FLUSH_DRAWINGS();
 #endif
+        }
+    }
+    catch(const std::exception& ex){
+        LOG_ERROR_S << "PathPlanner:UpdateHook(): " << ex.what();
+        setIfNotSet(RUNTIME_ERROR);
+    }
+
     PathPlannerBase::updateHook();
 }
 void PathPlanner::errorHook()
