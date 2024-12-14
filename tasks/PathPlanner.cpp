@@ -6,10 +6,18 @@
 #include <trajectory_follower/SubTrajectory.hpp>
 #include <base-logging/Logging.hpp>
 
+#include "pcl/point_cloud.h"
+#include <pcl/io/ply_io.h>
+#include <pcl/common/common.h>
+#include <pcl/common/transforms.h>
+#include <pcl/filters/filter.h> // For removeNaNFromPointCloud
+
 #include <boost/archive/binary_iarchive.hpp>
 #include <boost/archive/binary_oarchive.hpp>
 
 #include <algorithm>
+
+#include <fstream>
 
 using namespace ugv_nav4d;
 
@@ -98,7 +106,6 @@ bool PathPlanner::findTrajectoryOutOfObstacle()
 
 bool PathPlanner::configureHook()
 {
-
 #ifdef ENABLE_DEBUG_DRAWINGS
     std::vector<std::string> channels = V3DD::GET_DECLARED_CHANNELS();
     std::vector<std::string> channels_filtered;
@@ -122,19 +129,112 @@ bool PathPlanner::configureHook()
         _ob_map.write(planner->getObstacleMap().copyCast<maps::grid::TraversabilityNodeBase*>());
     });
 
+    initalPatchAdded = false;
+    executePlanning = false;
+    gotMap = false;
+
+    if (_load_mls_from_file.get() == true){
+        const std::string mls_file_path = _mls_file_path.get();
+        const std::string mls_file_type = _mls_file_type.get();
+        if (mls_file_type == "ply"){        
+            if (loadPlyAsMLS(mls_file_path)){
+                gotMap = true;
+            }
+        }
+        else if (mls_file_type == "bin"){  
+            if(loadMLSMapFromBin(mls_file_path)){
+                gotMap = true;
+            }
+        }
+        else{
+            LOG_ERROR_S << "Invalid MLS File Type: "+ mls_file_type;
+        }
+    }
+
     if (! PathPlannerBase::configureHook())
         return false;
     return true;
-
 }
+
+bool PathPlanner::loadPlyAsMLS(const std::string& path){
+    std::ifstream fileIn(path);       
+    if(path.find(".ply") != std::string::npos)
+    {
+        pcl::PointCloud<pcl::PointXYZ>::Ptr cloud = pcl::PointCloud<pcl::PointXYZ>::Ptr(new pcl::PointCloud<pcl::PointXYZ>());
+        pcl::PLYReader plyReader;
+        if(plyReader.read(path, *cloud) >= 0)
+        {
+            pcl::PointXYZ min, max; 
+            pcl::getMinMax3D (*cloud, min, max); 
+        
+            //transform point cloud to zero (instead we could also use MlsMap::translate later but that seems to be broken?)
+            Eigen::Affine3f pclTf = Eigen::Affine3f::Identity();
+            pclTf.translation() << -min.x, -min.y, -min.z;
+            pcl::transformPointCloud (*cloud, *cloud, pclTf);
+
+            std::vector<int> indices;
+            pcl::removeNaNFromPointCloud(*cloud, *cloud, indices);
+  
+            const double mls_res = _travConfig.get().gridResolution;
+            const double size_x = max.x - min.x;
+            const double size_y = max.y - min.y;
+            
+            maps::grid::MLSConfig cfg;
+            cfg.gapSize = 0.1; //get_parameter("mls_gap_size").as_double();
+            maps::grid::MLSMapSloped mlsMap;
+            const maps::grid::Vector2ui numCells(size_x / mls_res + 1, size_y / mls_res + 1);
+            mlsMap = maps::grid::MLSMapSloped(numCells, maps::grid::Vector2d(mls_res, mls_res), cfg);
+            mlsMap.mergePointCloud(*cloud, base::Transform3d::Identity());
+            if (_write_mls_to_port.get() == true){
+                _mls_map.write(mlsMap);
+            }
+            planner->updateMap(mlsMap);     
+        }
+        return true;
+    }
+    LOG_ERROR_S << "Unabled to load mls. Unknown format!";
+    return false;
+}
+
+bool PathPlanner::loadMLSMapFromBin(const std::string& filename){
+    if (filename.empty()) {
+        LOG_WARN_S << "Failed to load MLS Map from empty file: " << filename;
+        return false;
+    }
+
+    // Open the binary file in input mode
+    std::ifstream file(filename, std::ios::binary);
+    if (!file.is_open()) {
+        LOG_WARN_S << "Failed to open file: " << filename;
+        return false;
+    }
+
+    try {
+        // Load the file contents into the stream and deserialize
+        boost::archive::binary_iarchive ia(file);
+        maps::grid::MLSMapSloped mlsMap;
+        ia >> mlsMap;  // Deserialize into mlsMap
+        if (_write_mls_to_port.get() == true){
+            _mls_map.write(mlsMap);
+        }
+        planner->updateMap(mlsMap);      
+        LOG_DEBUG_S << "Loaded MLS Map from " << filename;
+        return true;
+    } catch (const std::exception &e) {
+        LOG_ERROR_S << "Error loading MLS Map: " << e.what();
+        return false;
+    }
+}
+
 bool PathPlanner::startHook()
 {
     if (! PathPlannerBase::startHook())
         return false;
 
-    initalPatchAdded = false;
-    executePlanning = false;
-    gotMap = false;
+    if(gotMap){
+        setIfNotSet(GOT_MAP);
+    }
+
     return true;
 }
 
@@ -154,6 +254,9 @@ void PathPlanner::updateHook()
     {
         gotMap = true;
         setIfNotSet(UPDATE_MAP);
+        if (_write_mls_to_port.get() == true){
+            _mls_map.write(map);
+        }
         planner->updateMap(map);
         setIfNotSet(GOT_MAP);
     }

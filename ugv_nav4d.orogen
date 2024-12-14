@@ -4,7 +4,7 @@ using_library "ugv_nav4d"
 using_library "trajectory_follower"
 using_library "base-lib"
 using_library "orocos_cpp"
-using_library "vizkit3d_debug_drawings-commands"
+using_library "vizkit3d_debug_drawings"
 
 import_types_from "base"
 import_types_from "maps"
@@ -20,7 +20,10 @@ task_context "PathPlanner" do
     needs_configuration
 
     # --- Properties ---
-
+    property("load_mls_from_file","bool", 0)
+    property("mls_file_type","string", 'bin')
+    property("mls_file_path","string", '/path/to/my_map.bin')
+    property("write_mls_to_port","bool", 0)
     property "maxTime", "base::Time"
     property "primConfig", "sbpl_spline_primitives::SplinePrimitivesConfig"
     property "travConfig", "traversability_generator3d::TraversabilityConfig"
@@ -47,6 +50,7 @@ task_context "PathPlanner" do
 
     output_port "tr_map", '/maps/grid/TraversabilityBaseMap3d'
     output_port "ob_map", '/maps/grid/TraversabilityBaseMap3d'
+    output_port "mls_map", '/maps/grid/MLSMapSloped'
 
     output_port "planning_start", "base/samples/RigidBodyState"
     output_port "planning_goal", "base/samples/RigidBodyState"

@@ -51,6 +51,9 @@ namespace ugv_nav4d{
          */
         virtual bool findTrajectoryOutOfObstacle();
 
+        bool loadMLSMapFromBin(const std::string& filename);
+        bool loadPlyAsMLS(const std::string& path);
+
     public:
         /** TaskContext constructor for PathPlanner
          * \param name Name of the task. This name needs to be unique to make it identifiable via nameservices.
