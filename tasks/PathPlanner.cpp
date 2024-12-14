@@ -166,24 +166,21 @@ bool PathPlanner::loadPlyAsMLS(const std::string& path){
         {
             pcl::PointXYZ min, max; 
             pcl::getMinMax3D (*cloud, min, max); 
-        
-            //transform point cloud to zero (instead we could also use MlsMap::translate later but that seems to be broken?)
-            Eigen::Affine3f pclTf = Eigen::Affine3f::Identity();
-            pclTf.translation() << -min.x, -min.y, -min.z;
-            pcl::transformPointCloud (*cloud, *cloud, pclTf);
-
+            
             std::vector<int> indices;
             pcl::removeNaNFromPointCloud(*cloud, *cloud, indices);
   
             const double mls_res = _travConfig.get().gridResolution;
             const double size_x = max.x - min.x;
             const double size_y = max.y - min.y;
-            
+            const maps::grid::Vector3d offset(min.x-1.5*mls_res, min.y-1.5*mls_res, 0);
+
             maps::grid::MLSConfig cfg;
             cfg.gapSize = 0.1; //get_parameter("mls_gap_size").as_double();
             maps::grid::MLSMapSloped mlsMap;
             const maps::grid::Vector2ui numCells(size_x / mls_res + 1, size_y / mls_res + 1);
             mlsMap = maps::grid::MLSMapSloped(numCells, maps::grid::Vector2d(mls_res, mls_res), cfg);
+            mlsMap.translate(offset);
             mlsMap.mergePointCloud(*cloud, base::Transform3d::Identity());
             if (_write_mls_to_port.get() == true){
                 _mls_map.write(mlsMap);
