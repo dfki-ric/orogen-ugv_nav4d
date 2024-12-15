@@ -5,7 +5,7 @@ include Orocos
 
 Orocos.initialize
 
-Orocos.run 'ugv_nav4d::MapLoader' => 'loader',
+Orocos.run 'maps::MLSMapSlopeLoader' => 'loader',
            'ugv_nav4d::PathPlanner' => 'planner' do
   ## Get the task context##
   loader = Orocos.name_service.get 'loader'
