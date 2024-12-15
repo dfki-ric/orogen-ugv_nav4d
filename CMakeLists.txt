@@ -16,7 +16,3 @@ INCLUDE(ugv_nav4dBase)
 
 # FIND_PACKAGE(KDL)
 # FIND_PACKAGE(OCL)
-
-
-#disabled due to circular dependency with lib_init_optional
-#add_subdirectory(init)
