@@ -4,7 +4,7 @@ using_library "ugv_nav4d"
 using_library "trajectory_follower"
 using_library "base-lib"
 using_library "orocos_cpp"
-using_library "vizkit3d_debug_drawings"
+using_library "vizkit3d_debug_drawings-commands"
 
 import_types_from "base"
 import_types_from "maps"
