@@ -49,7 +49,6 @@ task_context "PathPlanner" do
     output_port "detailedTrajectory3D", "std::vector<trajectory_follower/SubTrajectory>"
 
     output_port "tr_map", '/maps/grid/TraversabilityBaseMap3d'
-    output_port "ob_map", '/maps/grid/TraversabilityBaseMap3d'
     output_port "mls_map", '/maps/grid/MLSMapSloped'
 
     output_port "planning_start", "base/samples/RigidBodyState"

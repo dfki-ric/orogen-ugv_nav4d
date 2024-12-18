@@ -126,7 +126,6 @@ bool PathPlanner::configureHook()
     {
         //this callback will be called whenever the planner has generated a new travmap.
         _tr_map.write(planner->getTraversabilityMap().copyCast<maps::grid::TraversabilityNodeBase*>());
-        _ob_map.write(planner->getObstacleMap().copyCast<maps::grid::TraversabilityNodeBase*>());
     });
 
     initalPatchAdded = false;
