@@ -35,6 +35,7 @@ namespace ugv_nav4d{
         base::samples::RigidBodyState start_pose;
         base::samples::RigidBodyState stop_pose;
 
+        traversability_generator3d::TravMap3d map;
 
         void setIfNotSet(const PathPlannerBase::States &newState);
 
@@ -50,9 +51,6 @@ namespace ugv_nav4d{
         /** Triggers generation of a recovery trajectory from an invalid start pose.
          */
         virtual bool findTrajectoryOutOfObstacle();
-
-        bool loadMLSMapFromBin(const std::string& filename);
-        bool loadPlyAsMLS(const std::string& path);
 
     public:
         /** TaskContext constructor for PathPlanner

@@ -125,101 +125,16 @@ bool PathPlanner::configureHook()
     planner->setTravMapCallback([&] ()
     {
         //this callback will be called whenever the planner has generated a new travmap.
-        _tr_map.write(planner->getTraversabilityMap().copyCast<maps::grid::TraversabilityNodeBase*>());
+        _debug_tr_map.write(*(planner->getTraversabilityMap()));
     });
 
     initalPatchAdded = false;
     executePlanning = false;
     gotMap = false;
 
-    if (_load_mls_from_file.get() == true){
-        const std::string mls_file_path = _mls_file_path.get();
-        const std::string mls_file_type = _mls_file_type.get();
-        if (mls_file_type == "ply"){        
-            if (loadPlyAsMLS(mls_file_path)){
-                gotMap = true;
-            }
-        }
-        else if (mls_file_type == "bin"){  
-            if(loadMLSMapFromBin(mls_file_path)){
-                gotMap = true;
-            }
-        }
-        else{
-            LOG_ERROR_S << "Invalid MLS File Type: "+ mls_file_type;
-        }
-    }
-
     if (! PathPlannerBase::configureHook())
         return false;
     return true;
-}
-
-bool PathPlanner::loadPlyAsMLS(const std::string& path){
-    std::ifstream fileIn(path);       
-    if(path.find(".ply") != std::string::npos)
-    {
-        pcl::PointCloud<pcl::PointXYZ>::Ptr cloud = pcl::PointCloud<pcl::PointXYZ>::Ptr(new pcl::PointCloud<pcl::PointXYZ>());
-        pcl::PLYReader plyReader;
-        if(plyReader.read(path, *cloud) >= 0)
-        {
-            pcl::PointXYZ min, max; 
-            pcl::getMinMax3D (*cloud, min, max); 
-            
-            std::vector<int> indices;
-            pcl::removeNaNFromPointCloud(*cloud, *cloud, indices);
-  
-            const double mls_res = _travConfig.get().gridResolution;
-            const double size_x = max.x - min.x;
-            const double size_y = max.y - min.y;
-            const maps::grid::Vector3d offset(min.x-1.5*mls_res, min.y-1.5*mls_res, 0);
-
-            maps::grid::MLSConfig cfg;
-            cfg.gapSize = 0.1; //get_parameter("mls_gap_size").as_double();
-            maps::grid::MLSMapSloped mlsMap;
-            const maps::grid::Vector2ui numCells(size_x / mls_res + 1, size_y / mls_res + 1);
-            mlsMap = maps::grid::MLSMapSloped(numCells, maps::grid::Vector2d(mls_res, mls_res), cfg);
-            mlsMap.translate(offset);
-            mlsMap.mergePointCloud(*cloud, base::Transform3d::Identity());
-            if (_write_mls_to_port.get() == true){
-                _mls_map.write(mlsMap);
-            }
-            planner->updateMap(mlsMap);     
-        }
-        return true;
-    }
-    LOG_ERROR_S << "Unabled to load mls. Unknown format!";
-    return false;
-}
-
-bool PathPlanner::loadMLSMapFromBin(const std::string& filename){
-    if (filename.empty()) {
-        LOG_WARN_S << "Failed to load MLS Map from empty file: " << filename;
-        return false;
-    }
-
-    // Open the binary file in input mode
-    std::ifstream file(filename, std::ios::binary);
-    if (!file.is_open()) {
-        LOG_WARN_S << "Failed to open file: " << filename;
-        return false;
-    }
-
-    try {
-        // Load the file contents into the stream and deserialize
-        boost::archive::binary_iarchive ia(file);
-        maps::grid::MLSMapSloped mlsMap;
-        ia >> mlsMap;  // Deserialize into mlsMap
-        if (_write_mls_to_port.get() == true){
-            _mls_map.write(mlsMap);
-        }
-        planner->updateMap(mlsMap);      
-        LOG_DEBUG_S << "Loaded MLS Map from " << filename;
-        return true;
-    } catch (const std::exception &e) {
-        LOG_ERROR_S << "Error loading MLS Map: " << e.what();
-        return false;
-    }
 }
 
 bool PathPlanner::startHook()
@@ -237,12 +152,9 @@ bool PathPlanner::startHook()
 void PathPlanner::updateHook()
 {
     try{
+        
+        auto map_status = _tr_map.readNewest(map, false);
 
-        maps::grid::MLSMapSloped map;
-        auto map_status = _map.readNewest(map, false);
-
-        // The NO_MAP state should only be accessible if no map has ever been received.
-        // The planner should still be able to plan on 'old' maps (or least recently received map)
         if((map_status == RTT::NoData) && !gotMap)
         {
             setIfNotSet(NO_MAP);
@@ -251,9 +163,6 @@ void PathPlanner::updateHook()
         {
             gotMap = true;
             setIfNotSet(UPDATE_MAP);
-            if (_write_mls_to_port.get() == true){
-                _mls_map.write(map);
-            }
             planner->updateMap(map);
             setIfNotSet(GOT_MAP);
         }
@@ -279,12 +188,6 @@ void PathPlanner::updateHook()
             LOG_INFO_S << "PathPlanner: Executing planning...";
             _planning_start.write(start_pose);
             _planning_goal.write(stop_pose);
-
-            if(!initalPatchAdded)
-            {
-                planner->setInitialPatch(start_pose.getTransform(), _initialPatchRadius.get());
-                initalPatchAdded = true;
-            }
 
             planner->enablePathStatistics(_plannerConfig.get().usePathStatistics);
 
