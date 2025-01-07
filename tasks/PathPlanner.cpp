@@ -51,8 +51,10 @@ void PathPlanner::setIfNotSet(const PathPlannerBase::States& newState)
 int32_t PathPlanner::triggerPathPlanning(const base::samples::RigidBodyState& start_position,
                                          const base::samples::RigidBodyState& goal_position)
 {
-    if(!gotMap)
+    if(!gotMap){
+        LOG_ERROR_S << "operation call for triggerPathPlanning failed due to NO_MAP";
         return 0;
+    }
 
     start_pose = start_position;
     stop_pose = goal_position;
@@ -75,7 +77,13 @@ bool PathPlanner::findTrajectoryOutOfObstacle()
     Eigen::Affine3d ground2Body(Eigen::Affine3d::Identity());
     ground2Body.translation() = Eigen::Vector3d(0, 0, -_travConfig.get().distToGround);
 
-    _start_pose_samples.read(start_pose);
+    Eigen::Affine3d robot2map;
+    if(!_robot2map.get(base::Time::now(), robot2map, false))
+    {
+        LOG_ERROR_S << "Could not get robot pose!" << std::endl;
+        return false;
+    }
+    start_pose.setTransform(robot2map);
 
     if(!base::samples::RigidBodyState::isValidValue(start_pose.position) ||
             !base::samples::RigidBodyState::isValidValue(start_pose.orientation)){
@@ -151,10 +159,17 @@ bool PathPlanner::startHook()
 
 void PathPlanner::updateHook()
 {
+    PathPlannerBase::updateHook();
     try{
-        
-        auto map_status = _tr_map.readNewest(map, false);
+        Eigen::Affine3d robot2map;
+        if(!_robot2map.get(base::Time::now(), robot2map, false))
+        {
+            setIfNotSet(NO_POSE);
+            return;
+        }
+        start_pose.setTransform(robot2map);
 
+        auto map_status = _tr_map.readNewest(map, false);
         if((map_status == RTT::NoData) && !gotMap)
         {
             setIfNotSet(NO_MAP);
@@ -169,17 +184,13 @@ void PathPlanner::updateHook()
 
         // start planning if there is a new relative goal in port
         if (_goal_pose_relative.readNewest(stop_pose, false) == RTT::NewData) {
-            _start_pose_samples.read(start_pose);
             // transform stop pose to slam frame
             stop_pose.setTransform(start_pose.getTransform() * stop_pose.getTransform());
-
             executePlanning = true;
         }
 
         // start planning if there is a new absolute goal in port
         if (_goal_pose_absolute.readNewest(stop_pose, false) == RTT::NewData) {
-            _start_pose_samples.read(start_pose);
-
             executePlanning = true;
         }
 
@@ -241,8 +252,6 @@ void PathPlanner::updateHook()
         LOG_ERROR_S << "PathPlanner:UpdateHook(): " << ex.what();
         setIfNotSet(RUNTIME_ERROR);
     }
-
-    PathPlannerBase::updateHook();
 }
 void PathPlanner::errorHook()
 {

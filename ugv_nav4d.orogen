@@ -20,10 +20,6 @@ task_context "PathPlanner" do
     needs_configuration
 
     # --- Properties ---
-    property("load_mls_from_file","bool", 0)
-    property("mls_file_type","string", 'bin')
-    property("mls_file_path","string", '/path/to/my_map.bin')
-    property("write_mls_to_port","bool", 0)
     property "maxTime", "base::Time"
     property "primConfig", "sbpl_spline_primitives::SplinePrimitivesConfig"
     property "travConfig", "traversability_generator3d::TraversabilityConfig"
@@ -33,10 +29,17 @@ task_context "PathPlanner" do
     property("dumpOnError","int", 0)
     property("dumpOnSuccess","int", 0)
 
+
+    # --- Transformations ---
+
+    transformer do
+        transform "robot", "map"
+        max_latency 0.01
+    end
+
     # --- Input ports ---
 
     input_port "tr_map", '/traversability_generator3d/TravMap3d'
-    input_port "start_pose_samples", "base/samples/RigidBodyState"  # should be travConfig.distToGround above the floor
     # Writing one of those ports triggers the path planning, if map and start_pose_samples are given.
     input_port "goal_pose_relative", "base/samples/RigidBodyState"  # should be travConfig.distToGround above the floor
     input_port "goal_pose_absolute", "base/samples/RigidBodyState"   # should be travConfig.distToGround above the floor
@@ -68,6 +71,7 @@ task_context "PathPlanner" do
         doc("Triggers generation of a recovery trajectory from a START_INVALID start pose")
 
     runtime_states :NO_MAP,
+        :NO_POSE,
         :UPDATE_MAP,
         :GOT_MAP,
         :GOAL_INVALID,
@@ -81,5 +85,5 @@ task_context "PathPlanner" do
         :RECOVERED,
         :FAILED_TO_RECOVER
 
-    periodic 0.1
+    periodic "0.1"
 end
