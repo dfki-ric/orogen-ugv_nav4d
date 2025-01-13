@@ -73,7 +73,10 @@ bool PathPlanner::findTrajectoryOutOfObstacle()
         return false;
     }
     setIfNotSet(RECOVERING);
+    
     std::shared_ptr<trajectory_follower::SubTrajectory> trajectory2D;
+    std::shared_ptr<trajectory_follower::SubTrajectory> trajectory3D;
+
     Eigen::Affine3d ground2Body(Eigen::Affine3d::Identity());
     ground2Body.translation() = Eigen::Vector3d(0, 0, -_travConfig.get().distToGround);
 
@@ -98,18 +101,20 @@ bool PathPlanner::findTrajectoryOutOfObstacle()
     const Eigen::Affine3d startGround2Mls(start_pose.getTransform() * ground2Body);
     LOG_DEBUG_S << "PathPlanner::findTrajectoryOutOfObstacle(): startGround2Mls " << startGround2Mls.translation();
 
-    trajectory2D = planner->findTrajectoryOutOfObstacle(startGround2Mls.translation(), start_pose.getYaw(), ground2Body);
-    if (trajectory2D != nullptr){
+    trajectory2D = planner->findTrajectoryOutOfObstacle(startGround2Mls.translation(), start_pose.getYaw(), ground2Body, true);
+    trajectory3D = planner->findTrajectoryOutOfObstacle(startGround2Mls.translation(), start_pose.getYaw(), ground2Body, false);
+
+    if (trajectory2D != nullptr && trajectory3D != nullptr){
         LOG_INFO_S << "FOUND WAY OUT!";
         _detailedTrajectory2D.write(std::vector<trajectory_follower::SubTrajectory>{*trajectory2D});
+        _detailedTrajectory3D.write(std::vector<trajectory_follower::SubTrajectory>{*trajectory3D});
         setIfNotSet(RECOVERED);
         return true;
     }
-    else {
-        LOG_INFO_S << "NO WAY OUT, ROBOT IS STUCK!";
-        setIfNotSet(FAILED_TO_RECOVER);
-        return false;
-    }
+
+    LOG_INFO_S << "NO WAY OUT, ROBOT IS STUCK!";
+    setIfNotSet(FAILED_TO_RECOVER);
+    return false;
 }
 
 bool PathPlanner::configureHook()
