@@ -83,7 +83,7 @@ bool PathPlanner::findTrajectoryOutOfObstacle()
     Eigen::Affine3d robot2map;
     if(!_robot2map.get(base::Time::now(), robot2map, false))
     {
-        LOG_ERROR_S << "Could not get robot pose!" << std::endl;
+        LOG_DEBUG_S << "Could not get robot pose!" << std::endl;
         return false;
     }
     start_pose.setTransform(robot2map);
