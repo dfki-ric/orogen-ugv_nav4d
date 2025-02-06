@@ -36,6 +36,7 @@ namespace ugv_nav4d{
         base::samples::RigidBodyState stop_pose;
 
         traversability_generator3d::TravMap3d map;
+        traversability_generator3d::SoilMap3d soilmap;
 
         void setIfNotSet(const PathPlannerBase::States &newState);
 

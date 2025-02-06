@@ -187,6 +187,12 @@ void PathPlanner::updateHook()
             setIfNotSet(GOT_MAP);
         }
 
+        auto soilmap_status = _soil_map.readNewest(soilmap, false);
+        if(soilmap_status == RTT::NewData)
+        {
+            planner->updateSoilMap(soilmap);
+        }
+        
         // start planning if there is a new relative goal in port
         if (_goal_pose_relative.readNewest(stop_pose, false) == RTT::NewData) {
             // transform stop pose to slam frame
