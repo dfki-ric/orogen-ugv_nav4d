@@ -9,7 +9,6 @@ using_library "vizkit3d_debug_drawings-commands"
 import_types_from "base"
 import_types_from "maps"
 import_types_from "traversability_generator3d/TraversabilityConfig.hpp"
-import_types_from "traversability_generator3d/SoilNode.hpp"
 import_types_from "ugv_nav4d/PlannerConfig.hpp"
 import_types_from "ugv_nav4d/Mobility.hpp"
 import_types_from "ugv_nav4d/PreComputedMotions.hpp"
@@ -39,7 +38,6 @@ task_context "PathPlanner" do
     end
 
     # --- Input ports ---
-    input_port "soil_map", '/traversability_generator3d/SoilMap3d'
     input_port "tr_map", '/traversability_generator3d/TravMap3d'
     # Writing one of those ports triggers the path planning, if map and start_pose_samples are given.
     input_port "goal_pose_relative", "base/samples/RigidBodyState"  # should be travConfig.distToGround above the floor
