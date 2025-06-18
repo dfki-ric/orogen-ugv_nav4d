@@ -135,12 +135,6 @@ bool PathPlanner::configureHook()
 #endif
 
     planner.reset(new Planner(_primConfig.get(), _travConfig.get(), _mobilityConfig.get(), _plannerConfig.get()));
-    planner->setTravMapCallback([&] ()
-    {
-        //this callback will be called whenever the planner has generated a new travmap.
-        _debug_tr_map.write(*(planner->getTraversabilityMap()));
-    });
-
     initalPatchAdded = false;
     executePlanning = false;
     gotMap = false;
@@ -184,6 +178,7 @@ void PathPlanner::updateHook()
             gotMap = true;
             setIfNotSet(UPDATE_MAP);
             planner->updateMap(map);
+            _debug_tr_map.write(*(planner->getTraversabilityMap()));
             setIfNotSet(GOT_MAP);
         }
         
