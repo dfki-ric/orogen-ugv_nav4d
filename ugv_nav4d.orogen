@@ -8,6 +8,7 @@ using_library "vizkit3d_debug_drawings-commands"
 
 import_types_from "base"
 import_types_from "maps"
+import_types_from "traversability_rock_types"
 import_types_from "traversability_generator3d/TraversabilityConfig.hpp"
 import_types_from "ugv_nav4d/PlannerConfig.hpp"
 import_types_from "ugv_nav4d/Mobility.hpp"
