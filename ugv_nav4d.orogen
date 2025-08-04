@@ -8,6 +8,7 @@ using_library "vizkit3d_debug_drawings-commands"
 
 import_types_from "base"
 import_types_from "maps"
+import_types_from "traversability_rock_types"
 import_types_from "traversability_generator3d/TraversabilityConfig.hpp"
 import_types_from "ugv_nav4d/PlannerConfig.hpp"
 import_types_from "ugv_nav4d/Mobility.hpp"
@@ -20,10 +21,6 @@ task_context "PathPlanner" do
     needs_configuration
 
     # --- Properties ---
-    property("load_mls_from_file","bool", 0)
-    property("mls_file_type","string", 'bin')
-    property("mls_file_path","string", '/path/to/my_map.bin')
-    property("write_mls_to_port","bool", 0)
     property "maxTime", "base::Time"
     property "primConfig", "sbpl_spline_primitives::SplinePrimitivesConfig"
     property "travConfig", "traversability_generator3d::TraversabilityConfig"
@@ -33,10 +30,16 @@ task_context "PathPlanner" do
     property("dumpOnError","int", 0)
     property("dumpOnSuccess","int", 0)
 
-    # --- Input ports ---
 
-    input_port "map", '/maps/grid/MLSMapSloped'
-    input_port "start_pose_samples", "base/samples/RigidBodyState"  # should be travConfig.distToGround above the floor
+    # --- Transformations ---
+
+    transformer do
+        transform "robot", "map"
+        max_latency 0.01
+    end
+
+    # --- Input ports ---
+    input_port "tr_map", '/traversability_generator3d/TravMap3d'
     # Writing one of those ports triggers the path planning, if map and start_pose_samples are given.
     input_port "goal_pose_relative", "base/samples/RigidBodyState"  # should be travConfig.distToGround above the floor
     input_port "goal_pose_absolute", "base/samples/RigidBodyState"   # should be travConfig.distToGround above the floor
@@ -48,8 +51,7 @@ task_context "PathPlanner" do
     output_port "detailedTrajectory2D", "std::vector<trajectory_follower/SubTrajectory>"
     output_port "detailedTrajectory3D", "std::vector<trajectory_follower/SubTrajectory>"
 
-    output_port "tr_map", '/maps/grid/TraversabilityBaseMap3d'
-    output_port "mls_map", '/maps/grid/MLSMapSloped'
+    output_port "debug_tr_map", '/traversability_generator3d/TravMap3d'
 
     output_port "planning_start", "base/samples/RigidBodyState"
     output_port "planning_goal", "base/samples/RigidBodyState"
@@ -69,6 +71,7 @@ task_context "PathPlanner" do
         doc("Triggers generation of a recovery trajectory from a START_INVALID start pose")
 
     runtime_states :NO_MAP,
+        :NO_POSE,
         :UPDATE_MAP,
         :GOT_MAP,
         :GOAL_INVALID,
@@ -82,5 +85,5 @@ task_context "PathPlanner" do
         :RECOVERED,
         :FAILED_TO_RECOVER
 
-    periodic 0.1
+    periodic "0.1"
 end
