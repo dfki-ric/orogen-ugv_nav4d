@@ -5,6 +5,7 @@ using_library "trajectory_follower"
 using_library "base-lib"
 using_library "orocos_cpp"
 using_library "vizkit3d_debug_drawings-commands"
+using_library "collide"
 
 import_types_from "base"
 import_types_from "maps"
@@ -43,6 +44,7 @@ task_context "PathPlanner" do
     # Writing one of those ports triggers the path planning, if map and start_pose_samples are given.
     input_port "goal_pose_relative", "base/samples/RigidBodyState"  # should be travConfig.distToGround above the floor
     input_port "goal_pose_absolute", "base/samples/RigidBodyState"   # should be travConfig.distToGround above the floor
+    input_port "obstacles", "std::vector</base/samples/OrientedBoundingBox>"
 
     # --- Output ports ---
 

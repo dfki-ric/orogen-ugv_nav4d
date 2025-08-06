@@ -205,6 +205,23 @@ void PathPlanner::updateHook()
             setIfNotSet(PLANNING);
             std::vector<SubTrajectory> trajectory2D, trajectory3D;
 
+
+            _obstacles.readNewest(obstacles);
+            std::vector<std::vector<collide::Point>> hulls_in_robot_frame = convex_hulls.computeConvexHulls3D(obstacles); 
+            std::vector<std::vector<Eigen::Vector2d>> convexHulls2D;
+            for (auto& hull : hulls_in_robot_frame) {
+                std::vector<Eigen::Vector2d> hull_in_map;
+                for (auto &edge : hull){
+                    Eigen::Vector3d edge_in_robot_frame{edge.x,edge.y,edge.z};  
+                    Eigen::Vector3d edge_in_map_frame = start_pose.getTransform() * edge_in_robot_frame;
+                    hull_in_map.push_back(edge_in_map_frame.head(2));
+                }
+                convexHulls2D.push_back(hull_in_map);
+            }     
+
+            planner->updateObstacleHulls(convexHulls2D);
+
+
             Planner::PLANNING_RESULT res = planner->plan(_maxTime.value(), start_pose, stop_pose, trajectory2D, trajectory3D, _dumpOnError.get(), _dumpOnSuccess.get());
 
             // Create vectors of base trajectories for obtained trajectories which can be written

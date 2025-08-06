@@ -3,6 +3,8 @@
 #include "ugv_nav4d/PathPlannerBase.hpp"
 #include <memory>
 #include <Eigen/Core>
+#include <collide/ComputeConvexHulls.hpp>
+#include <collide/Point.hpp>
 
 namespace ugv_nav4d{
 
@@ -34,6 +36,8 @@ namespace ugv_nav4d{
         bool gotMap;
         base::samples::RigidBodyState start_pose;
         base::samples::RigidBodyState stop_pose;
+        std::vector<base::samples::OrientedBoundingBox> obstacles;
+        collide::ComputeConvexHulls convex_hulls;
 
         traversability_generator3d::TravMap3d map;
 
