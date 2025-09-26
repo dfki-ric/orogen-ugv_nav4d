@@ -153,6 +153,7 @@ bool PathPlanner::startHook()
         setIfNotSet(GOT_MAP);
     }
 
+    _robot2map.registerUpdateCallback([this](const base::Time& time){lastPoseUpdate = time;});
     return true;
 }
 
@@ -161,7 +162,7 @@ void PathPlanner::updateHook()
     PathPlannerBase::updateHook();
     try{
         Eigen::Affine3d robot2map;
-        if(!_robot2map.get(base::Time::now(), robot2map, false))
+        if(!_robot2map.get(lastPoseUpdate, robot2map, false))
         {
             setIfNotSet(NO_POSE);
             return;

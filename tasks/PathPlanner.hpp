@@ -34,6 +34,7 @@ namespace ugv_nav4d{
         bool gotMap;
         base::samples::RigidBodyState start_pose;
         base::samples::RigidBodyState stop_pose;
+        base::Time lastPoseUpdate;
 
         traversability_generator3d::TravMap3d map;
 

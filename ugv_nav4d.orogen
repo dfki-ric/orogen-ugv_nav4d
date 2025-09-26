@@ -85,5 +85,5 @@ task_context "PathPlanner" do
         :RECOVERED,
         :FAILED_TO_RECOVER
 
-    periodic "0.1"
+    periodic "0.01"
 end
